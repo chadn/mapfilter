@@ -1,0 +1,397 @@
+/*
+ * copy-paste prototype for mapFilter 
+ * 2010-4-8 chad norwood
+ * 2010-6-1 chad norwood
+ * 2010-9-2 chad norwood
+ */
+
+/* originally from tablesorter.style.css */
+table.tablesorter {
+	font-family:arial;
+	background-color: #CDCDCD;
+	margin:10px 0pt 15px;
+	font-size: 8pt;
+	width: 100%;
+	text-align: left;
+}
+table.tablesorter thead tr th, table.tablesorter tfoot tr th {
+	background-color: #e6EEEE;
+	border: 1px solid #FFF;
+	font-size: 8pt;
+	padding: 4px;
+}
+table.tablesorter thead tr .header {
+	background-image: url(../img/bg.gif);
+	background-repeat: no-repeat;
+	background-position: center right;
+	cursor: pointer;
+}
+table.tablesorter tbody td {
+	color: #3D3D3D;
+	padding: 4px;
+	background-color: #FFF;
+	vertical-align: top;
+}
+table.tablesorter tbody tr.odd td {
+	background-color:#F0F0F6;
+}
+table.tablesorter thead tr .headerSortUp {
+	background-image: url(../img/asc.gif);
+}
+table.tablesorter thead tr .headerSortDown {
+	background-image: url(../img/desc.gif);
+}
+table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSortUp {
+    background-color: #8dbdd8;
+}
+table.tablesorter {margin: 0 0 0 0;} 
+
+      /* Generic map, side bar holder styles */
+      .MapBuilder {font: normal small verdana, arial, helvetica, sans-serif; font-size: 10pt; margin: 0px;}
+      .MapBuilder a {text-decoration: none; color: #0066CC; background-color: transparent;}
+      .MapBuilder a:hover {color: #F60; background-color: transparent;}
+      .MapBuilder h1 {font-weight: bold; font-size: 16pt; color: #369; border-bottom: 2px solid #369;}
+      
+      /* Info Window styles */
+      .IW { width: 340px;}
+      .IWContent {height: 120px; overflow:auto;}
+      .IWCaption {font-weight: bold; font-size: 12pt; color: #369; border-bottom: 2px solid #369;}
+      .IWFooter {margin-top: 5px; font-size: 8pt; }
+      .IWFooterZoom {}
+      .IWDirections{background-color:#FFF;}
+
+/* want to save linebreaks but also wordwrap */
+.preWrapped pre {
+  white-space: pre; 
+  white-space: pre-wrap;       /* css-3 */
+  white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;      /* Opera 4-6 */
+  white-space: -o-pre-wrap;    /* Opera 7 */
+  word-wrap: break-word;       /* Internet Explorer 5.5+ */
+  text-align:left;
+  font: normal small verdana, arial, helvetica, sans-serif; 
+  font-size: 8pt; 
+}
+
+body          {text-align:left;}
+.main         {height: 100%; width:980px !important; width:982px;}
+.columns      {width:145px; float:left; padding:0px; position:relative; z-index:100; overflow:auto;}
+.float        {float:left; display:inline;}
+.topBottomBdr {border-width:1px 0px 1px 0px;}
+.leftRightBdr {border-width:0px 1px 0px 1px;}
+.content      {margin:0px;}
+.grey1  {background-color:#DCC;}
+.incols {margin-right:-164px; float:right;}
+
+#wrap   {margin-left:auto; margin-right:auto; text-align:left;}
+#float  {background-color:#CCC;}
+#center {margin-left:-1px; margin-right:195px; width:780px !important; width:780px; background-color:#FFF; position:relative;}
+#rightC {margin-right:-174px; float:right;}
+#MapID2  {height:600px;}
+#footer {width:100%; height:20px; background-color:#FFF;}
+
+.classlist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.classlist li {
+  background: #ecfad7;
+  padding: 10px 20px 10px;
+  border-top: solid 1px #c4df9b;
+  cursor: pointer;
+}
+.classlist li:hover {
+  background: #f6ffe9;
+}
+
+  body{ margin-top: 0; margin: 0; padding: 0; font-size:80%;}
+  .ui-state-active { background: white; }
+  .containerWrap {position:absolute; width: 99%; height: 98%; background: #99B3CC; }
+  #gcmDiv { position:relative; width: 100%; height: 100%; background: white; }
+  #MapID { width:67%; height:99%; float:left; background:blue;}
+  #rtSide { width:32%; height:99%; float:right; }
+  #tab-header { margin: 5px; font-size:200%; }
+  #MapStats { font-size:70%; }
+  #tab-container { margin: 1px; }
+  #resizable3 { padding:5px; font-size:62%; position:absolute }
+  #resizable4 { overflow:auto; }
+  #footer { padding:5px; z-index:100;}
+  #containerDELME h3 { text-align: center; margin: 0; margin-bottom: 10px; }
+  #filtersTab { text-align: left; }
+  /*a:hover { background: #E6E6E6; color: #555555; }*/
+  .highlight2 { font: bold;background: #E6E6E6; color: #555555; }
+  .highlight2 { font: bold;background: yellow; color: black; }
+
+p {clear:both;}
+
+#addTab { text-align:left;}
+#addForms { margin:0; padding: 0; clear: both; border:0;}
+#addForm { margin:2; padding: 1; border:0;}
+#addForm label {
+float:left;
+padding:0 8px 0 0;
+text-align:left;
+width:6em;
+}
+#addForm label.error { float: none; color: red; padding-left: .5em; vertical-align: top; }
+#addForm span {
+float:left;
+align:left;
+padding:0 0 0 8px;
+text-align:left;
+}
+
+
+.helpClass {
+	float:left; text-align:left; padding:10px;
+}
+div.scrollContainer {
+  overflow:hidden;
+}
+div.scrollContent {
+  position:relative;
+  top:0;
+}
+.scrollPane {
+  height: auto;
+  overflow: visible;
+  background: #EEEEEE;
+  float: left;
+  text-align:left;
+  position:absolute;
+}
+
+.jScrollPaneContainer {
+	border: 5px solid #9999CC;
+}
+
+
+
+
+
+
+ /*
+  *  for jScrollPane 
+  *  http://www.kelvinluck.com/assets/jquery/jScrollPane/examples.html
+  *  note - if winxp is used, must pass options like this
+  *  	$('#pane1').jScrollPane({showArrows:true, scrollbarWidth: 17});
+  *  note - if osX is used, like this
+  *		$('#pane2').jScrollPane({showArrows:true, scrollbarWidth: 15, arrowSize: 16});
+  */
+.winXP .jScrollPaneTrack {
+	background: url(../img/windows_track.gif) repeat-y;
+}
+.winXP .jScrollPaneDrag {
+	background: url(../img/windows_drag_middle.gif) no-repeat 0 50%;
+}
+.winXP .jScrollPaneDragTop {
+	background: url(../img/windows_drag_top.gif) no-repeat;
+	height: 4px;
+}
+.winXP .jScrollPaneDragBottom {
+	background: url(../img/windows_drag_bottom.gif) no-repeat;
+	height: 4px;
+}
+.winXP a.jScrollArrowUp {
+	height: 17px;
+	background: url(../img/windows_arrow_up.gif) no-repeat 0 0;
+}
+.winXP a.jScrollArrowUp:hover {
+	background-position: 0 -20px;
+}
+.winXP a.jScrollArrowDown {
+	height: 17px;
+	background: url(../img/windows_arrow_down.gif) no-repeat 0 0;
+}
+.winXP a.jScrollArrowDown:hover {
+	background-position: 0 -20px;
+}
+.winXP a.jScrollActiveArrowButton, .winXP a.jScrollActiveArrowButton:hover {
+	background-position: 0 -40px;
+}
+
+
+.osX .jScrollPaneTrack {
+	background: url(../img/osx_track.gif) repeat-y;
+}
+.osX .jScrollPaneDrag {
+	background: url(../img/osx_drag_middle.gif) repeat-y;
+}
+.osX .jScrollPaneDragTop {
+	background: url(../img/osx_drag_top.gif) no-repeat;
+	height: 6px;
+}
+.osX .jScrollPaneDragBottom {
+	background: url(../img/osx_drag_bottom.gif) no-repeat;
+	height: 7px;
+}
+.osX a.jScrollArrowUp {
+	height: 24px;
+	background: url(../img/osx_arrow_up.png) no-repeat 0 -30px;
+}
+.osX a.jScrollArrowUp:hover {
+	background-position: 0 0;
+}
+.osX a.jScrollArrowDown {
+	height: 24px;
+	background: url(../img/osx_arrow_down.png) no-repeat 0 -30px;
+}
+.osX a.jScrollArrowDown:hover {
+	background-position: 0 0;
+}
+
+
+
+
+
+
+.ui-slider .ui-slider-handle {
+	width: 34px;
+	height: 25px;
+	padding: 2px;
+	top: -10px;
+	margin-left: 0;  /* reset horizontal handle offset */
+	margin-bottom: 0; /* reset vertical handle offset */
+	border: 1px solid #2E6E9E;
+	color: #2E6E9E;
+	text-align: center;
+	font-size: 9px;
+}
+.ui-slider-horizontal {
+	/* set dynamically - width: 300px; */
+}
+.ui-slider-range {
+	background: #6699EE;
+}
+
+#titleDiv {
+	overflow:auto;
+	padding-right: 100px; /* match gcmLogo width */
+	background-color: #B5D29C;
+
+}
+#titleDiv div {
+}
+
+#calendarTitle, 
+#resultsDataFilters {
+	position: relative;
+	float: left;
+	padding: 0;
+	/*background-color: #ECECE2;*/
+	height: auto;
+	font-size: 12px;
+	text-align: left;
+	width: 100%;
+	background-color: #FFFFFF;
+
+}
+#calendarTitleContent {
+	padding: 5px;	
+}
+#calendarTitle h3 {
+	font-size: 24px;
+	margin: 5px 5px 2px 5px;
+	margin: 0;
+	text-align: left;
+}
+#calendarTitle span {
+	font-size: 12px;
+	margin: 1px 5px 5px 5px;
+	margin: 0;
+	text-align: left;
+}
+#gcmLogo, 
+#resultsDataStatus {
+	position: relative;
+	float:right;
+	width: 100px;       /* match parent titleDiv's padding-right */
+	margin-right: -100px;/* match parent titleDiv's padding-right */
+	height: 60px;
+	/*background-color: #AACCDD;*/
+	/*color: #2E6E9E;*/
+	text-align: center;
+	background-color: #B5D29C;
+}
+
+#gcmLogo h1 {
+	font-size: 36px;
+	font-weight: bold;
+	margin: 0;
+}
+#resultsData {
+	overflow:auto;
+	padding-right: 100px; /* match gcmLogo width */	
+}
+#resultsDataFilters {
+	/*background-color: #E6EEEE;*/
+	position: relative;
+	float: left;
+}	
+#resultsDataStatus {
+	height: auto;
+	position: relative;
+	float: left;
+	text-align:center;
+	/*background-color: #CCCCDD;*/
+	background-color: #B5D29C;	
+}
+#ResultsMapHdr {
+	padding: 2px 5px;	
+}
+#gcmDiv .jumpLink {
+	color: #0085D0;
+	color: #0045CC;
+	text-decoration: none;
+}
+#gcmDiv .actionable {
+	color: #005599;
+	text-decoration: none;
+}
+#gcmDiv .actionable:hover,
+#gcmDiv .jumpLink:hover {
+	text-decoration: underline;
+}
+
+.helpContainer {
+	overflow: auto;
+}
+.helpContainer h3 {
+	padding-left: 5px;
+}
+.exampleCalendars {
+	float: left;
+}
+#newDates {
+	display:none;
+	overflow: hidden;
+	/* width set in dialogDates in js */
+	text-align:left;
+}
+#pickDates {
+	position: relative;
+	float: left;
+}
+#submitDates {
+	position: relative;
+	float: left;
+}
+
+/*
+ * Google calendar colors
+ * ocean blue: #99B3CC
+ * icon blue: #307BC2
+ * forrest green: #B5D29C
+ * highway exit green: #41A774
+ * orange highway: #FFC345
+ * yellow road: #FFFD8B
+ * grey city block: #EDEAE2
+ * orange-brown buidling: #DED2AC
+ */
+
+/* end of file */
+
+  
+ 
+ 
