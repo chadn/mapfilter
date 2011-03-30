@@ -73,6 +73,10 @@ window.debug = (function(){
     // Default logging level, show everything.
     log_level = 9,
     
+    // include secs.msec in logging output
+    include_msecs = false,
+    startMs = new Date().getTime(),
+    
     // Logging methods, in "priority order". Not all console implementations
     // will utilize these, but they will be used in the callback passed to
     // setCallback.
@@ -175,8 +179,20 @@ window.debug = (function(){
       //  object - (Object) Any valid JavaScript object.
       
       that[ level ] = function() {
-        var args = aps.call( arguments ),
-          log_arr = [ level ].concat( args );
+        var args = aps.call( arguments );
+        
+        if (true === include_msecs) {
+            var elapsedMs = new Date().getTime() - startMs;
+            // add a period between secs and msecs
+            if (elapsedMs < 1000) {
+                elapsedMs = (''+(1000+elapsedMs)).replace(/1(\d{3})$/,"0.$1");
+            } else {
+                elapsedMs = (''+elapsedMs).replace(/(\d{3})$/,".$1");
+            }
+            args = [elapsedMs].concat(args);
+        }
+        
+        var log_arr = [ level ].concat( args );
         
         logs.push( log_arr );
         exec_callback( log_arr );
@@ -220,6 +236,21 @@ window.debug = (function(){
   
   that.setLevel = function( level ) {
     log_level = typeof level === 'number' ? level : 9;
+  };
+
+  // Method: debug.includeMsecs
+  // 
+  // if set to true, then prepend all logs with elapsed time since js load time
+  // output format:  secs.msecs
+  // ex:  0.025 log1    means "log1" was logged 25 msecs since js load time
+  // ex:  22.400 log2   means "log2" was logged 22.4 seconds since js load time
+  // 
+  // Usage:
+  // 
+  //  debug.includeMsecs( boolean )                                            - -
+  //
+  that.includeMsecs = function( shouldInclude ) {
+    include_msecs = shouldInclude ? true : false;
   };
   
   // Determine if the level is visible given the current log_level.

@@ -28,6 +28,7 @@
 	} else {
 		debug && debug.setLevel(0); // turns off all logging
 	}
+	debug.includeMsecs(true);
 
 
 	// EventClass - event objects created from this class contain all the
