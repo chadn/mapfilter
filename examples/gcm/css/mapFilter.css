@@ -61,7 +61,7 @@ table.tablesorter {margin: 0 0 0 0;}
       .IWDirections{background-color:#FFF;}
 
 /* want to save linebreaks but also wordwrap */
-.preWrapped pre {
+.preWrapped {
   white-space: pre; 
   white-space: pre-wrap;       /* css-3 */
   white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
@@ -70,7 +70,8 @@ table.tablesorter {margin: 0 0 0 0;}
   word-wrap: break-word;       /* Internet Explorer 5.5+ */
   text-align:left;
   font: normal small verdana, arial, helvetica, sans-serif; 
-  font-size: 8pt; 
+  font-size: 8pt;
+  margin-bottom: 10px;
 }
 
 body          {text-align:left;}
@@ -291,6 +292,12 @@ div.scrollContent {
 	padding: 5px;	
 }
 #calendarTitle h3 {
+	font-size: 24px;
+	margin: 5px 5px 2px 5px;
+	margin: 0;
+	text-align: left;
+}
+#calendarTitle h4 {
 	font-size: 24px;
 	margin: 5px 5px 2px 5px;
 	margin: 0;

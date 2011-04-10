@@ -539,13 +539,14 @@
 
 
 	  		rowHTML += onlyValidCoords ? '<td><a class="eventNameTrigger actionable" onclick="cnMFUI.hItem(' + kk.id + ')"  title="Click to show marker on map" href="javascript:void(0)" style="display:block">'
-					+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.name, 100, 0, '')) + "</a></td>"
-				: '<td>'+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.name, 100, 0, '')) + '</td>';
+					+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.name, 100, 0, '', 1)) + "</a></td>"
+				: '<td>'+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.name, 100, 0, '', 1)) + '</td>';
 
 	  		rowHTML += "<td>[<a href='" + kk.url + "' class='jumpLink' title='Click to view Calendar Event Web Page in new window' target='_blank'>Event Details</a>] "
-					+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.desc, 100, 0, '')) + "</td>";
+					+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.desc, 140, 0, '', 1)) + "</td>";
 
-	  		rowHTML += onlyValidCoords ? '<td>' + kk.addrFromGoogle + ' (<a class="actionable" href="javascript:void(0)" title="' + cnMFUI.htmlEncode(cnMFUI.maxStr(kk.addrOrig, 100, 0, '')) + '">orig</a>)</td>'
+	  		rowHTML += onlyValidCoords ? '<td>' + kk.addrFromGoogle + ' (<a class="actionable" href="javascript:void(0)" title="' 
+					+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.addrOrig, 100, 0, '', 0)) + '">orig</a>)</td>'
 				: '<td>'+(kk.addrOrig.match(/\w/) ? kk.addrOrig : '[empty]' )
 				  +'<br><a href="' + kk.url + '" title="Click to edit this event (if you have permission) in a new window" target="_blank">Edit Event Address</a><br>Error: ' + kk.error + '</td>';
 	  		rowHTML += "</tr>\n";
@@ -695,7 +696,7 @@
 		  //infoHTML = "<div class=\"IW\"><h1>"+ kk['n'] +"<\/h1><div id=\"IWContent\">"+ desc +"</div>"+footer+"</div>";
 
 		  kk.infoHtml = "<div class='IW'><h1>"+ kk.name +"<\/h1>";
-		  kk.infoHtml += "<div id='IWContent' class='preWrapped'><pre>"+ cnMFUI.maxStr( addLinks(kk.desc), 900, 26, kk.url) +"</pre></div>";
+		  kk.infoHtml += "<div id='IWContent' class='preWrapped'>"+ cnMFUI.maxStr( addLinks(kk.desc), 900, 26, kk.url) +"</div>";
 		  kk.infoHtml += '<div id="IWZoom">';
 		  kk.infoHtml += cnMF.formatDate(kk.dateStart, 'F D, l gx') +"-"+ cnMF.formatDate(kk.dateEnd, 'gx') +"<br>";
 		  kk.infoHtml += '<a href="javascript:void(0)" onclick="cnMFUI.zoomTo('+ kk.id +')">Zoom To</a> - ';
@@ -842,7 +843,7 @@
 		
 		updateStatus("<a title='Click to view Full Calendar' class='actionable' href='"+ cnMF.gcLink +"'>"
 			+ cnMF.gcTitle +"</a><br>Mapping Events ... ");
-		$('#calendarTitleContent').html("<h3><a title='Click to view calendar in new window' "
+		$('#calendarTitleContent').html("<h3><a title='"+cnMF.desc+" - Click to view calendar in new window' "
 			+"class='jumpLink' target='_blank' href='"+ cnMF.gcLink +"'>"+ cnMF.gcTitle +"</a></h3>");
 
 		html = '<span>Calendar has '+ cnMF.totalEvents + (cnMF.totalEvents==cnMF.totalEntries ? ''
@@ -1161,7 +1162,7 @@
 		  return $('<div/>').html(value).text();
 	},
 
-	maxStr: function(str, maxChars, maxLines, link) {
+	maxStr: function(str, maxChars, maxLines, link, chopLongStrings) {
 		shorten = false;
 
 		if ((maxChars > 1) && (str.length > maxChars)) {
@@ -1177,9 +1178,10 @@
 			}
 		  }
 		}
+		// chopLongStrings..
 		// table column width gets screwed with long strings (urls), so chop'em if longer than 15 chars!!
 		var rgx = /(\S{15})(\S)/;
-		if (rgx.test(str)) {
+		if (chopLongStrings && rgx.test(str)) {
 		  shorten = true;
 		  var ss = str;
 		  // . does not match newline - instead, use [\s\S] - http://www.regular-expressions.info/javascript.html
@@ -1198,7 +1200,7 @@
 		if (!shorten) return str;
 
 		if (link && link.length > 1) {
-		  if (link.match(/^http/i)) link = "<a href='"+ link +"' title='Link To Complete Details (new page)'>more</a>";
+		  if (link.match(/^http/i)) link = "<a href='"+ link +"' target='_blank' title='Link To Complete Details (new page)'>more</a>";
 		  return str + "..\n ("+ link +")";
 		  //return str.substring(0,str.length-5) + "...\n ("+ link +")";
 		}

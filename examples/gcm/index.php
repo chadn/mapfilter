@@ -187,6 +187,7 @@ $foo = 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Vestibulum com
 			</ol>
 		    <h3>Example Calendars:</h3>
 			<ol>
+			<a class="actionable" href="<?=$basedir?>?ed=180&u=https://www.google.com/calendar/feeds/dnr6osjdrtn4fqpf70ep8ck1rc%40group.calendar.google.com/public/basic">Chad's Chicago: Summer Festivals and More</a><br>
 			<a class="actionable" href="<?=$basedir?>?u=http://www.google.com/calendar/feeds/jo0ubvoi1gutr95kdtl1245u3g@group.calendar.google.com/public/basic">A New York Track Club</a><br>
 			<a class="actionable" href="<?=$basedir?>?sd=2011-01-01&ed=2011-12-31&u=http://www.google.com/calendar/feeds/asa5k2phscdna68j9e5410v6mc@group.calendar.google.com/public/basic">2011 Trail Races</a><br>
 			<a class="actionable" href="<?=$basedir?>?u=http://www.google.com/calendar/feeds/tour%2540darrellsurvey.com/public/basic">Golf Survey Tour</a><br>

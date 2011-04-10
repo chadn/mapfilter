@@ -419,8 +419,9 @@
 
 		debug.info("parseGCalData() calendar data: ",cdata);
 
-		if (cdata.feed.title) cnMF.gcTitle = cdata.feed.title['$t'];
-		if (cdata.feed.link) cnMF.gcLink = cdata.feed.link[0]['href'];
+		cnMF.gcTitle = cdata.feed.title ? cdata.feed.title['$t'] : 'title unknown';
+		cnMF.gcLink = cdata.feed.link ? cdata.feed.link[0]['href'] : '';
+		cnMF.desc = cdata.feed.subtitle ? cdata.feed.subtitle['$t'] : 'subtitle unknown';
 		cnMF.reportData['fn'] = cnMF.gcTitle.replace(/\W/,"_");
 		var uniqAddr={};
 
