@@ -1120,7 +1120,14 @@
 	},
 
 	zoomTo: function(id) {
-		newZoom = (myGmap.getZoom() >= 19) ? 19 : (myGmap.getZoom() + 1);
+		var maxZoom = 19,
+			curZoom = myGmap.getZoom(),
+			newZoom = maxZoom;
+		if (curZoom < maxZoom) {
+			var increaseZoom = Math.floor((maxZoom - curZoom)/2);
+			newZoom = curZoom + (increaseZoom > 1 ? increaseZoom : 1);
+		}
+		debug.warn("zoomTo(): maxZoom="+maxZoom+", curZoom="+curZoom+", newZoom="+newZoom);
 		coords = cnMF.eventList[id].getCoordsStr();
 		myGmap.setCenter(cnMF.myMarkers.getGoogleMarker(coords).getLatLng(), newZoom);
 		//mapChanged();
