@@ -909,16 +909,15 @@
 	}
 
 	function cbUserInteracted() {
-		console.log("user clicked or dragged!!");
 		if (cnMF.reportData.userInteracted) {
 			// already recorded first user interaction
 			return;
 		}
-		//GEvent.removeListener(mapClickListener);
-		//GEvent.removeListener(mapDragstartListener);
+		GEvent.removeListener(mapClickListener);
+		GEvent.removeListener(mapDragstartListener);
 		cnMF.reportData.userInteracted = '' + new Date().getTime();
 		cnMF.reportData.userInteracted = cnMF.reportData.userInteracted.replace(/(\d{3})$/,".$1"); // add period so its secs.msec
-		console.log("cnMF.reportData.userInteracted ",cnMF.reportData.userInteracted);
+		debug.log("cnMF.reportData.userInteracted ",cnMF.reportData.userInteracted);
 	}
 	function updateLoadingMap() {
 		// only showing all events (move from chicago to NY, zoom out, etc) IF

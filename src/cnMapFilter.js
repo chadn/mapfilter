@@ -472,6 +472,7 @@
 		cnMF.totalEvents = cdata.feed.openSearch$totalResults.$t || cnMF.totalEntries;
 
 		debug.log("calling mapfilter.geocode(): ", uniqAddr );
+		cnMF.myGeoDecodeComplete = false;
 		cnMF.myGeo = cnMF.geocodeManager({
 			addresses: uniqAddr,
 			googleApiKey: cnMF.googleApiKey,
@@ -481,6 +482,7 @@
 			},
 			geocodeCompleteCallback: function() {
 				//onGeoDecodeComplete();
+				cnMF.myGeoDecodeComplete = true;
 				if ('function' === typeof callbacks.onGeoDecodeComplete) callbacks.onGeoDecodeComplete();
 			}
 		});
