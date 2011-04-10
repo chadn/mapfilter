@@ -49,8 +49,10 @@
 
 	var ndays = cnMFUI.opts.gCalDays;
 	var jumptxt = cnMFUI.opts.jumpTxt;
-
-	var emptyTableHtml = "<td>nope</td><td>no match</td><td>uh-uh</td><td>nowhere</td>";
+	var mapClickListener = false,
+		mapDragstartListener = false,
+		lastUpdate4MapLoad = false,
+		emptyTableHtml = "<td>nope</td><td>no match</td><td>uh-uh</td><td>nowhere</td>";
 
 	/*
 	 *   static variables
@@ -64,7 +66,7 @@
 	// end variables
 
 	cnMF.reportData.loadTime = (startMs2 +'').replace(/(\d{3})$/,".$1") // add period so its secs.msec
-
+	cnMF.reportData.userInteracted = false;
 
 	  function init() {
 
@@ -191,7 +193,17 @@
 		myGmap.setUIToDefault();
 		myGmap.setCenter(new GLatLng(cnMFUI.opts.mapCenterLt, cnMFUI.opts.mapCenterLg), cnMFUI.opts.mapZoom, myGmap.getMapTypes()[cnMFUI.opts.mapType]);
 		gGeocoder = new GClientGeocoder();
-		GEvent.addListener(myGmap, 'moveend', function(){mapMovedListener();});
+		GEvent.addListener(myGmap, 'moveend', function(){
+			mapMovedListener();
+		});
+		mapClickListener = GEvent.addListener(myGmap, 'click', function(){
+			// handles click and double-clicks, but not click-and-drag
+			cbUserInteracted(); 
+		});
+		mapDragstartListener = GEvent.addListener(myGmap, 'dragstart', function(){
+			// handles click-and-drag
+			cbUserInteracted(); 
+		});
 		mapLogo(myGmap);
 		mapJumpBox(myGmap);
 		iconDefault = new GIcon(G_DEFAULT_ICON, urlIconDefault);
@@ -878,8 +890,46 @@
 		cnMF.reportData['uniqAddrDecoded'] = cnt.uniqAddrDecoded;
 		cnMF.reportData['uniqAddrTotal'] = cnt.uniqAddrTotal;
 		cnMF.reportData['uniqAddrErrors'] = cnt.uniqAddrErrors;
+		
+		// if user has NOT interacted with map, 
+		// AND its been over 3000 ms since last updated map with results from
+		// newly decoded addresses (we don't want to update map too frequently),
+		// THEN update the loading map 
+		if (cnMF.reportData.userInteracted) {
+			return;
+		}
+		var now = new Date().getTime();
+		if (lastUpdate4MapLoad) {
+			if (3000 < (now - lastUpdate4MapLoad)) {
+					updateLoadingMap();
+			}
+		} else {
+			lastUpdate4MapLoad = now;
+		}
 	}
 
+	function cbUserInteracted() {
+		console.log("user clicked or dragged!!");
+		if (cnMF.reportData.userInteracted) {
+			// already recorded first user interaction
+			return;
+		}
+		//GEvent.removeListener(mapClickListener);
+		//GEvent.removeListener(mapDragstartListener);
+		cnMF.reportData.userInteracted = '' + new Date().getTime();
+		cnMF.reportData.userInteracted = cnMF.reportData.userInteracted.replace(/(\d{3})$/,".$1"); // add period so its secs.msec
+		console.log("cnMF.reportData.userInteracted ",cnMF.reportData.userInteracted);
+	}
+	function updateLoadingMap() {
+		// only showing all events (move from chicago to NY, zoom out, etc) IF
+		// - user has not specified a specific zoom (handled in index.php logic and passed to us via mapAllOnInit)
+		// - user has not already started interacting with the map
+		if (cnMFUI.opts.mapAllOnInit && !cnMF.reportData.userInteracted) {
+			cnMF.mapAllEvents();
+		} else {
+			mapRedraw();
+		}
+	}
 	// cbGeoDecodeComplete() called once all addresses are decoded
 	function cbGeoDecodeComplete() {
 		debug.log("cbGeoDecodeComplete() begins");
@@ -898,12 +948,8 @@
 		// note that URL limit is 1024 (?) chars, so can't send too much data
 		//$.post("http://chadnorwood.com/saveJson/", {sj: cnMF.reportData});
 		$.getJSON("http://chadnorwood.com/saveJson/?callback=?", {sj: cnMF.reportData});
-
-		if (cnMFUI.opts.mapAllOnInit) {
-			cnMF.mapAllEvents();
-		} else {
-			mapRedraw();
-		}
+		
+		updateLoadingMap();
 	}
 
 
