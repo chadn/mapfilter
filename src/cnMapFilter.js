@@ -189,6 +189,7 @@
 		filteredByMap: false,
 		types: [],
 		myMarkers: {},
+		tz: {},
 		eventList: []
 	}
 
@@ -203,10 +204,10 @@
 		cnMF.origEndDay   = coreOptions.oEndDay;
 		cnMF.googleApiKey   = coreOptions.googleApiKey;
 		
-		var timezone = jstz.determine_timezone();
-		cnMF.timezoneOffset = timezone.offset(); // Offset in hours and minutes from UTC.
-		cnMF.timezoneName = timezone.name();    // Olson database timezone key (ex: Europe/Berlin)
-		//debug.warn("jstz.dst: "+timezone.dst()); // bool for whether the tz uses daylight saving time
+		cnMF.tz.offset = coreOptions.tzOffset ? coreOptions.tzOffset : ''; // Offset in hours and minutes from UTC
+		cnMF.tz.name = coreOptions.tzName ? coreOptions.tzName : 'unknown'; // Olson database timezone key (ex: Europe/Berlin)
+		cnMF.tz.dst = coreOptions.tzDst ? coreOptions.tzDst : 'unknown'; // bool for whether the tz uses daylight saving time
+		cnMF.tz.computedFromBrowser = (cnMF.tz.name != 'unknown');
 	}
 
 	cnMF.countTotal = function () {
@@ -413,11 +414,9 @@
 			'sortorder': 'ascending',
 			'singleevents': false
 		};
-		if (cnMF.timezoneName) {
-			gCalObj.ctz = cnMF.timezoneName; // ex: 'America/Chicago'
-			debug.info("Displaying calendar times using timezone: "+ gCalObj.ctz);
-		} else {
-			debug.info("Displaying calendar times using its default timezone.");
+		if (cnMF.tz.name != 'unknown') {
+			gCalObj.ctz = cnMF.tz.name; // ex: 'America/Chicago'
+			debug.info("Displaying calendar times using this timezone: "+ gCalObj.ctz);
 		}
 		$.getJSON(gCalUrl + "?alt=json-in-script&callback=?", gCalObj, function(cdata) {
 			parseGCalData(cdata, startDate, endDate, callbacks);
@@ -432,6 +431,11 @@
 		cnMF.gcLink = cdata.feed.link ? cdata.feed.link[0]['href'] : '';
 		cnMF.desc = cdata.feed.subtitle ? cdata.feed.subtitle['$t'] : 'subtitle unknown';
 		cnMF.reportData['fn'] = cnMF.gcTitle.replace(/\W/,"_");
+		cnMF.gcTitle = cdata.feed.title ? cdata.feed.title['$t'] : 'title unknown';
+		if (!cnMF.tz.computedFromBrowser) {
+			cnMF.tz.name = cdata.feed.gCal$timezone.value;
+			debug.info("Displaying calendar times using calendar timezone: "+ cnMF.tz.name);
+		}
 		var uniqAddr={};
 
 		/* do we need this at all anymore?
@@ -807,7 +811,7 @@
 				+ ":" + zeroPad(d.getUTCMinutes())
 				+ ":" + zeroPad(d.getUTCSeconds());
 		}
-		return s + cnMF.timezoneOffset; // ex: "-06:00" is chicago offset
+		return s + cnMF.tz.offset; // ex: "-06:00" is chicago offset
 	}
 
 

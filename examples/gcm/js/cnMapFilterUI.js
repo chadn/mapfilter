@@ -71,13 +71,14 @@
 	  function init() {
 
 		debug.log('mapfilter().init(), cnMF:',cnMF);
+		var timezone = jstz.determine_timezone(); // https://bitbucket.org/pellepim/jstimezonedetect/wiki/Home
 		initDivs();
 		myGmap = initGMap();
 		//updateSizes();
 
 		// initialize the core MapFilter
-		cnMF.init({
-			// callback functions
+		var initObj = {
+			// cb = callback functions
 			cbBuildInfoHtml : buildInfoHtml,
 			cbMapRedraw : mapRedraw,
 			cbHighlightItem : cnMFUI.hItem,
@@ -85,7 +86,14 @@
 			oEndDay : date2days(cnMFUI.opts.endDay),
 			googleApiKey: cnMFUI.opts.googleApiKey,
 			gMap : myGmap
-		});
+		};
+		if (!window.location.href.match(/tz=cal/) && timezone) {
+			// if tz=cal is in URL, we use default of calendar timezone. Otherwise use local timezone from browser
+			initObj.tzName = timezone.name();
+			initObj.tzOffset = timezone.offset();
+			initObj.tzDst = timezone.dst();
+		}
+		cnMF.init(initObj);
 		// TODO - move initGMap to cnMF.init(), then do this shortcut: var myGmap = cnMF.gMap;
 		debug.log("init cnMF:",cnMF);
 
@@ -503,11 +511,11 @@
 	  }
 
 	  function createResultsTable(divId, onlyValidCoords){
-	  	debug.log("createResultsTable() ", divId, onlyValidCoords);
+	  	debug.warn("createResultsTable() ", divId, onlyValidCoords);
 
 		// note: give table dummy tbody data or tablesorter gives "parsers is undefined" error
 	  	tableHtml = "<table id='"+divId+"Table' class='tablesorter'><thead><tr>"
-				+ "<th title='Click to Sort by Event Date, timezone "+cnMF.timezoneName+"'>Date</th>"
+				+ "<th id='thDate' title='Click to Sort by Event Date, timezone "+cnMF.tz.name+"'>Date</th>"
 				+ "<th title='Click to Sort by Event Name'>Name</th>"
 				+ "<th title='Click to Sort by Event Description'>Description</th>"
 				+ "<th title='Click to Sort by Event Location'>Where</th>"
@@ -879,6 +887,8 @@
 			_gaq.push(['_trackEvent', 'Interaction', 'cancelChangeDates']);
 			$("#newDates").css('display','none');
 		});
+		$('#thDate').attr('title','Click to Sort by Event Date, Timezone '+cnMF.tz.name);
+
 		//updateStatus2('Found '+ cnMF.totalEvents +' ('+cnMF.totalEntries+') events, '+ uniqAddrCount +' unique addresses, decoding .. ');
 		updateStatus2('Found '+ cnMF.myGeo.numAddresses +' events, '+ cnMF.myGeo.numUniqAddresses +' unique addresses, decoding .. ');
 	}
