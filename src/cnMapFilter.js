@@ -202,6 +202,11 @@
 		cnMF.origStartDay = coreOptions.oStartDay;
 		cnMF.origEndDay   = coreOptions.oEndDay;
 		cnMF.googleApiKey   = coreOptions.googleApiKey;
+		
+		var timezone = jstz.determine_timezone();
+		cnMF.timezoneOffset = timezone.offset(); // Offset in hours and minutes from UTC.
+		cnMF.timezoneName = timezone.name();    // Olson database timezone key (ex: Europe/Berlin)
+		//debug.warn("jstz.dst: "+timezone.dst()); // bool for whether the tz uses daylight saving time
 	}
 
 	cnMF.countTotal = function () {
@@ -400,17 +405,21 @@
 		debug.info("getGCalData(): start-max: "+startmax);
 
 		// http://code.google.com/apis/calendar/docs/2.0/reference.html
-		$.getJSON(gCalUrl + "?alt=json-in-script&callback=?",
-		{
+		gCalObj = {
 			'start-min': startmin,
 			'start-max': startmax,
 			'max-results': 200,
 			'orderby'  : 'starttime',
 			'sortorder': 'ascending',
-			'ctz'	  : 'America/Chicago',
 			'singleevents': false
-		},
-		function(cdata) {
+		};
+		if (cnMF.timezoneName) {
+			gCalObj.ctz = cnMF.timezoneName; // ex: 'America/Chicago'
+			debug.info("Displaying calendar times using timezone: "+ gCalObj.ctz);
+		} else {
+			debug.info("Displaying calendar times using its default timezone.");
+		}
+		$.getJSON(gCalUrl + "?alt=json-in-script&callback=?", gCalObj, function(cdata) {
 			parseGCalData(cdata, startDate, endDate, callbacks);
 		});
 	}
@@ -798,7 +807,7 @@
 				+ ":" + zeroPad(d.getUTCMinutes())
 				+ ":" + zeroPad(d.getUTCSeconds());
 		}
-		return s + "-08:00"; // chicago offset
+		return s + cnMF.timezoneOffset; // ex: "-06:00" is chicago offset
 	}
 
 

@@ -97,6 +97,7 @@ $foo = 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Vestibulum com
     <script type="text/javascript" src="<?=$basedir?>js/jquery.tablesorter.pager.js"></script>
     <script type="text/javascript" src="<?=$basedir?>js/json2.js"></script>
     <script type="text/javascript" src="<?=$basedir?>js/jScrollPane.js"></script> 
+    <script type="text/javascript" src="<?=$basedir?>js/detect_timezone.js"></script>
     <script type="text/javascript" src="<?=$basedir?>js/ba-debug.js"></script>
 	<script type="text/javascript" src="<?=$basedir?>js/cnMapFilter.js"></script>
 	<script type="text/javascript" src="<?=$basedir?>js/cnMapFilterUI.js"></script>

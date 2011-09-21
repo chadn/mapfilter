@@ -507,7 +507,7 @@
 
 		// note: give table dummy tbody data or tablesorter gives "parsers is undefined" error
 	  	tableHtml = "<table id='"+divId+"Table' class='tablesorter'><thead><tr>"
-				+ "<th title='Click to Sort by Event Date'>Date</th>"
+				+ "<th title='Click to Sort by Event Date, timezone "+cnMF.timezoneName+"'>Date</th>"
 				+ "<th title='Click to Sort by Event Name'>Name</th>"
 				+ "<th title='Click to Sort by Event Description'>Description</th>"
 				+ "<th title='Click to Sort by Event Location'>Where</th>"
