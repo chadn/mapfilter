@@ -1,0 +1,3 @@
+  wget "http://localhost/gmap/igor_work/examples/gcm/index.html?ed=180&u=https://www.google.com/calendar/feeds/edbd7jqqu7s83ndvv276mueeig%40group.calendar.google.com/public/basic" -O igor
+  wget "http://chadnorwood.com/gcm/?ed=180&u=https://www.google.com/calendar/feeds/edbd7jqqu7s83ndvv276mueeig%40group.calendar.google.com/public/basic" -O chad
+  meld chad igor

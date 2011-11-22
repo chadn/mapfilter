@@ -948,15 +948,15 @@
 		cnMF.reportData.submitTime = cnMF.reportData.submitTime.replace(/(\d{3})$/,".$1"); // add period so its secs.msec
 		debug.info("cbGeoDecodeComplete() post cnMF.reportData:", cnMF.reportData);
 
-			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrDecoded', cnMF.reportData.uniqAddrDecoded]);
-			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrTotal', cnMF.reportData.uniqAddrTotal]);
-			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrErrors', cnMF.reportData.uniqAddrErrors]);
-			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'totalGeoDecodes', 1]);
-			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'totalGeoDecodeMsecs', parseInt(cnMF.reportData.submitTime.replace(/\./,'')) - parseInt(cnMF.reportData.loadTime.replace(/\./,''))]);
+		_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrDecoded', cnMF.reportData.uniqAddrDecoded]);
+		_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrTotal', cnMF.reportData.uniqAddrTotal]);
+		_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrErrors', cnMF.reportData.uniqAddrErrors]);
+		_gaq.push(['_trackEvent', 'Loading', 'calenders', 'totalGeoDecodes', 1]);
+		_gaq.push(['_trackEvent', 'Loading', 'calenders', 'totalGeoDecodeMsecs', parseInt(cnMF.reportData.submitTime.replace(/\./,'')) - parseInt(cnMF.reportData.loadTime.replace(/\./,''))]);
 		// only script tag can bypass same-origin-policy, so use jsonp hack by adding callback=?
 		// note that URL limit is 1024 (?) chars, so can't send too much data
 		//$.post("http://chadnorwood.com/saveJson/", {sj: cnMF.reportData});
-		$.getJSON("http://chadnorwood.com/saveJson/?callback=?", {sj: cnMF.reportData});
+		//$.getJSON("http://chadnorwood.com/saveJson/?callback=?", {sj: cnMF.reportData});
 		
 		updateLoadingMap();
 	}

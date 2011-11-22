@@ -7,7 +7,12 @@ Write a feature list [DONE] See http://chadnorwood.com/projects/gcm/#KeyFeatures
 
 Translate application (add flags under the top right GCM logo; auto-detect language by IP)
 
-What happens when the list of events is too long?
+Remove the "_ errors" in the top right box. It's redundant with the warning link that appears. 
+
+What happens when the list of events is too long? [DONE] See vert slider in 
+   http://chadnorwood.com/gcm/?u=http://www.google.com/calendar/feeds/jo0ubvoi1gutr95kdtl1245u3g@group.calendar.google.com/public/basic
+
+Add link to FAQ in information message: "The Following Events Had Addresses (Where) That Could Not Be Found. See FAQ" 
 
 Inform the user of inconsistencies (in the calendar entries). Use a javascript alert?
 
@@ -22,3 +27,6 @@ Inform the user for time-consuming operations (load calendar)
 When events are on the whole day, do not display time (second part of 2011-12-10 Sat 00:00)
 
 Jump to an address, city, or zip - the zoom level should match the granularity: "Indiana" is a state-wide request. 
+
+Auto-center on first load (I don't live in Chicago!) - I broke it removing the PHP 
+

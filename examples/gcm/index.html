@@ -95,11 +95,12 @@ var catg = validateString('c',0,100, 'all');
 var maptype = validateInt('m',0,4, 0); 
 var gZoomLevel = validateInt('z',1,20, 13); 
 // var mapAllOnInit = (has('z') ? 0:1) ; 
-var mapAllOnInit = 0; 
+var mapAllOnInit = 1; 
 
 // default to Rennes, France
 var ll = validateFloat('lng',-180,180, -1.6); 
 var lt = validateFloat('lat',-180,180, 48.1); 
+
 
 // find events initially in this range
 var sday = validateDate('ed',0);  // start today (0 days from now)
@@ -153,16 +154,9 @@ debug2( "xmlurl " + xmlurl )
     //
 	cnMFUI.init({
 
-
-//var ll = validateFloat('lng',-180,180, 41.885405); 
-//var lt = validateFloat('lat',-180,180, -87.626072); 
-//      mapCenterLt: lt,
-//      mapCenterLg: ll,
-
-
-		// For more info on options, see 'defaults'
+      // For more info on options, see 'defaults'
       containerId: "containerId",
-	  mapId: "MapID",
+      mapId: "MapID",
       listId: "tableTab",
       statusId: "MapStatus",
       mapCenterLt: lt,
