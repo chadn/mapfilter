@@ -1,0 +1,24 @@
+What is the 'src' directory (ask Chad)?
+
+Remove external calls 
+  $.getJSON("http://chadnorwood.com/saveJson/?callback=?", {sj: cnMF.reportData}); 
+
+Write a feature list [DONE] See http://chadnorwood.com/projects/gcm/#KeyFeatures
+
+Translate application (add flags under the top right GCM logo; auto-detect language by IP)
+
+What happens when the list of events is too long?
+
+Inform the user of inconsistencies (in the calendar entries). Use a javascript alert?
+
+plot icon on the map should bear information. For example, number of events at location. 
+
+Display several calendars at once: differentiate by color
+
+horizontal slider filters OK the calendar table, but not the map (look for first chronolgical entry)
+
+Inform the user for time-consuming operations (load calendar)
+
+When events are on the whole day, do not display time (second part of 2011-12-10 Sat 00:00)
+
+Jump to an address, city, or zip - the zoom level should match the granularity: "Indiana" is a state-wide request. 
