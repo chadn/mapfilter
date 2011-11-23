@@ -45,62 +45,70 @@ function httpGetParam( name )
 
 function validateDate(httpParamName, def) {
     var date = new Date();
-    var value = httpGetParam(httpParamName); 
-    var offset = parseInt(value);
-    if (!isNaN(offset))
-         date.setDate(date.getDate()+offset)
+    var offset = httpGetParam(httpParamName); 
+    offset = parseInt(offset);
+    if (isNaN(offset))
+        offset = def;
+    date.setDate(date.getDate()+offset);
     var month = date.getMonth() + 1;
     var day = date.getDate();
     var year = date.getFullYear();
-    return year + "-" + month + "-" + day
+    return year + "-" + month + "-" + day;
 }
 
-function validateFloat(value, min, max, def) {
-    // FIXME httpGetParam, if in range
-    return def;
+function validateFloat(httpParamName, min, max, def) {
+    var value = httpGetParam(httpParamName); 
+    value = parseFloat(value);
+    if (isNaN(value))
+        value = def;
+    if (value < min)
+        value = min;
+    if (max < value)
+        value = max;
+    return value;
 }
 
-function validateString(value, min, max, def) {
-    return def;
-}
-
-function validateInt(value, min, max, def) {
-    return def;
+function validateInt(httpParamName, min, max, def) {
+    var value = httpGetParam(httpParamName); 
+    value = parseInt(value);
+    if (isNaN(value))
+        value = def;
+    if (value < min)
+        value = min;
+    if (max < value)
+        value = max;
+    return value;
 }
 
 function validateSize(value, min, max, def) {
     return def;
 }
 
-function validateURL(url) {
-    // Fixme protect Cross-inject
-    return httpGetParam(url);
+function validateURL(httpParamName) {
+  var value = httpGetParam(httpParamName);
+  var regex = "https://www.google.com/calendar/feeds/[a-z0-9]*%40group.calendar.google.com/public/basic";
+  regex = new RegExp( regex );
+  if (regex.exec( value )  == null )
+    return "";
+  return value; 
 }
 
 // Configure here the values, from URL or default
-var basedir = location.host + '/' + location.pathname
-
-var rating = validateString('r',0,5, 'all');
-var catg = validateString('c',0,100, 'all');
 var maptype = validateInt('m',0,4, 0); 
 var gZoomLevel = validateInt('z',1,20, 13); 
-// var mapAllOnInit = (has('z') ? 0:1) ; 
-var mapAllOnInit = 1; 
+var mapAllOnInit = (httpGetParam('z') != null ? 0 : 1) ; 
 
 // default to Rennes, France
 var ll = validateFloat('lng',-180,180, -1.6); 
 var lt = validateFloat('lat',-180,180, 48.1); 
 
-
 // find events initially in this range
 var sday = validateDate('ed',0);  // start today (0 days from now)
 var eday = validateDate('sd',180); // end in 6 months
 
-var map_size=validateSize('size',200,2000,200,2000, [800,600]);
+var map_size = validateSize('size',200,2000,200,2000, [800,600]);
 var xmlurl = validateURL('u'); 
 
-debug.debug( "basedir " +basedir )
-debug.debug( "catg " +catg )
 debug.debug( "sday " +sday )
 debug.debug( "eday " +eday )
 debug.debug( "gZoomLevel " +gZoomLevel )
@@ -108,8 +116,10 @@ debug.debug( "ll " + ll )
 debug.debug( "lt " + lt )
 debug.debug( "mapAllOnInit " +mapAllOnInit )
 debug.debug( "maptype " +maptype )
-debug.debug( "rating " +rating )
 debug.debug( "xmlurl " + xmlurl )
+
+	$(document).ready(function() {
+         //$("#xmlHelpButton").click(function() { $("#xmlHelpInfo").toggle(); });
 
     var _gaq = _gaq || [];
     _gaq.push(['_setAccount', 'UA-2767105-1']);
@@ -166,11 +176,6 @@ debug.debug( "xmlurl " + xmlurl )
          }); // end document ready
 
     //]]></script>
-	<!--
-    <script type='text/javascript' src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script>
-    NOTE: comment out above firebug-lite in production 
-    -->
-
 
   </head>
   <body onunload="GUnload();">
