@@ -9,7 +9,14 @@ Remove external calls
 [DONE] What happens when the list of events is too long? See vert slider in 
    http://chadnorwood.com/gcm/?u=http://www.google.com/calendar/feeds/jo0ubvoi1gutr95kdtl1245u3g@group.calendar.google.com/public/basic
 
-[TRIVIAL] remove PHP code
+[DONE] remove PHP code. See index.html
+
+[DONE] Create test calendar.  
+	https://www.google.com/calendar/feeds/0ei0284so407vu24o7o0q5ares%40group.calendar.google.com/public/basic
+
+[DONE] non-ascii characters break the geo-locating code. Removed encode(), use instead http://www.w3schools.com/jsref/jsref_encodeuri.asp
+
+[TRIVIAL] Change dates has a debug popup that should be removed
 
 [TRIVIAL] Add link to FAQ in information message: "The Following Events Had Addresses (Where) That Could Not Be Found. See FAQ" 
 	See FAQ.html for a start. 
@@ -28,9 +35,7 @@ Remove external calls
 
 [MEDIUM] Inform the user for time-consuming operations (load calendar)
 
-[BUG] non-ascii characters break the geo-locating code
-
-[BUG] horizontal slider filters OK the calendar table, but not the map (look for first chronolgical entry)
+[BUG] horizontal time slider filters OK the calendar table, but not the map (look for first chronolgical entry)
 
 [TEDIOUS] Translate application (add flags under the top right GCM logo; auto-detect language by IP)
 

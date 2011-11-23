@@ -38,64 +38,66 @@ function httpGetParam( name )
   var regex = new RegExp( regexS );
   var results = regex.exec( window.location.href );
   if( results == null )
-    return "";
+    return null;
   else
     return results[1];
 }
 
-function debug2(text) {
-console.log(text);
-}
-
-function debug1(text) {
-    var newParagraph = document.createElement('p');
-    var textOfTheParagraph = document.createTextNode(text);
-    newParagraph.appendChild(textOfTheParagraph);
-    document.getElementById('debug').appendChild(newParagraph);
-    document.getElementById('debug').appendChild(document.createElement('br'));
-}
-
-function validateDate(value, offset) {
-    // FIXME httpGetParam, if offset in range
+function validateDate(httpParamName, def) {
+    var offset = httpGetParam(httpParamName); 
+    offset = parseInt(offset);
+    if (isNaN(offset))
+        offset = def;
+    offset = def;   // FIXME - this line should be deleted!
     var date = new Date();
-    date.setDate(date.getDate()+offset)
+    date.setDate(date.getDate()+offset);
     var month = date.getMonth() + 1;
     var day = date.getDate();
     var year = date.getFullYear();
-    return year + "-" + month + "-" + day
+    return year + "-" + month + "-" + day;
 }
 
-function validateFloat(value, min, max, def) {
-    // FIXME httpGetParam, if in range
-    return def;
+function validateFloat(httpParamName, min, max, def) {
+    var value = httpGetParam(httpParamName); 
+    value = parseFloat(value);
+    if (isNaN(value))
+        value = def;
+    if (value < min)
+        value = min;
+    if (max < value)
+        value = max;
+    return value;
 }
 
-function validateString(value, min, max, def) {
-    return def;
-}
-
-function validateInt(value, min, max, def) {
-    return def;
+function validateInt(httpParamName, min, max, def) {
+    var value = httpGetParam(httpParamName); 
+    value = parseInt(value);
+    if (isNaN(value))
+        value = def;
+    if (value < min)
+        value = min;
+    if (max < value)
+        value = max;
+    return value;
 }
 
 function validateSize(value, min, max, def) {
     return def;
 }
 
-function validateURL(url) {
-    // Fixme protect Cross-inject
-    return httpGetParam(url);
+function validateURL(httpParamName) {
+  var value = httpGetParam(httpParamName);
+  var regex = "https://www.google.com/calendar/feeds/[a-z0-9]*%40group.calendar.google.com/public/basic";
+  regex = new RegExp( regex );
+  if (regex.exec( value )  == null )
+    return "";
+  return value; 
 }
 
 // Configure here the values, from URL or default
-var basedir = location.host + '/' + location.pathname
-
-var rating = validateString('r',0,5, 'all');
-var catg = validateString('c',0,100, 'all');
 var maptype = validateInt('m',0,4, 0); 
 var gZoomLevel = validateInt('z',1,20, 13); 
-// var mapAllOnInit = (has('z') ? 0:1) ; 
-var mapAllOnInit = 1; 
+var mapAllOnInit = (httpGetParam('z') != null ? 0 : 1) ; 
 
 // default to Rennes, France
 var ll = validateFloat('lng',-180,180, -1.6); 
@@ -106,21 +108,10 @@ var lt = validateFloat('lat',-180,180, 48.1);
 var sday = validateDate('ed',0);  // start today (0 days from now)
 var eday = validateDate('sd',180); // end in 6 months
 
+console.log ("sday="  + sday  + " eday="  + eday);
+
 var map_size=validateSize('size',200,2000,200,2000, [800,600]);
 var xmlurl = validateURL('u'); 
-
-debug2( "basedir " +basedir )
-debug2( "catg " +catg )
-debug2( "sday " +sday )
-debug2( "eday " +eday )
-debug2( "gZoomLevel " +gZoomLevel )
-debug2( "ll " + ll )
-debug2( "lt " + lt )
-debug2( "mapAllOnInit " +mapAllOnInit )
-debug2( "maptype " +maptype )
-debug2( "rating " +rating )
-debug2( "xmlurl " + xmlurl )
-
 
 
     var _gaq = _gaq || [];
@@ -206,6 +197,7 @@ debug2( "xmlurl " + xmlurl )
 			<li><a class="actionable" href="?sd=2011-01-01&ed=2011-12-31&u=http://www.google.com/calendar/feeds/asa5k2phscdna68j9e5410v6mc@group.calendar.google.com/public/basic">2011 Trail Races</a></li>
 			<li><a class="actionable" href="?u=http://www.google.com/calendar/feeds/tour%2540darrellsurvey.com/public/basic">Golf Survey Tour</a></li>
 			<li><a class="actionable" href="?ed=180&u=https://www.google.com/calendar/feeds/edbd7jqqu7s83ndvv276mueeig%40group.calendar.google.com/public/basic">Aikido</a></li>
+			<li><a class="actionable" href="?ed=180&u=https://www.google.com/calendar/feeds/0ei0284so407vu24o7o0q5ares%40group.calendar.google.com/public/basic">Test</a></li>
 			</ol>
 
 			<h3>How do I make it Go?</h3>
