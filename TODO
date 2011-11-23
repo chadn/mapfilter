@@ -33,3 +33,5 @@ Remove external calls
 [BUG] horizontal slider filters OK the calendar table, but not the map (look for first chronolgical entry)
 
 [TEDIOUS] Translate application (add flags under the top right GCM logo; auto-detect language by IP)
+
+[???] Write an integration process: checkSyntax, minify, push to Web server
