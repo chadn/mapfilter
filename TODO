@@ -27,3 +27,5 @@ Inform the user for time-consuming operations (load calendar)
 When events are on the whole day, do not display time (second part of 2011-12-10 Sat 00:00)
 
 Jump to an address, city, or zip - the zoom level should match the granularity: "Indiana" is a state-wide request. 
+
+non-ascii characters break the geo-locating code
