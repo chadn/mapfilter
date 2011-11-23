@@ -38,27 +38,17 @@ function httpGetParam( name )
   var regex = new RegExp( regexS );
   var results = regex.exec( window.location.href );
   if( results == null )
-    return "";
+    return null;
   else
     return results[1];
 }
 
-function debug2(text) {
-console.log(text);
-}
-
-function debug1(text) {
-    var newParagraph = document.createElement('p');
-    var textOfTheParagraph = document.createTextNode(text);
-    newParagraph.appendChild(textOfTheParagraph);
-    document.getElementById('debug').appendChild(newParagraph);
-    document.getElementById('debug').appendChild(document.createElement('br'));
-}
-
-function validateDate(value, offset) {
-    // FIXME httpGetParam, if offset in range
+function validateDate(httpParamName, def) {
     var date = new Date();
-    date.setDate(date.getDate()+offset)
+    var value = httpGetParam(httpParamName); 
+    var offset = parseInt(value);
+    if (!isNaN(offset))
+         date.setDate(date.getDate()+offset)
     var month = date.getMonth() + 1;
     var day = date.getDate();
     var year = date.getFullYear();
@@ -109,19 +99,17 @@ var eday = validateDate('sd',180); // end in 6 months
 var map_size=validateSize('size',200,2000,200,2000, [800,600]);
 var xmlurl = validateURL('u'); 
 
-debug2( "basedir " +basedir )
-debug2( "catg " +catg )
-debug2( "sday " +sday )
-debug2( "eday " +eday )
-debug2( "gZoomLevel " +gZoomLevel )
-debug2( "ll " + ll )
-debug2( "lt " + lt )
-debug2( "mapAllOnInit " +mapAllOnInit )
-debug2( "maptype " +maptype )
-debug2( "rating " +rating )
-debug2( "xmlurl " + xmlurl )
-
-
+debug.debug( "basedir " +basedir )
+debug.debug( "catg " +catg )
+debug.debug( "sday " +sday )
+debug.debug( "eday " +eday )
+debug.debug( "gZoomLevel " +gZoomLevel )
+debug.debug( "ll " + ll )
+debug.debug( "lt " + lt )
+debug.debug( "mapAllOnInit " +mapAllOnInit )
+debug.debug( "maptype " +maptype )
+debug.debug( "rating " +rating )
+debug.debug( "xmlurl " + xmlurl )
 
     var _gaq = _gaq || [];
     _gaq.push(['_setAccount', 'UA-2767105-1']);
