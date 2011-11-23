@@ -732,7 +732,7 @@
 		// http://groups.google.com/group/google-maps-api/browse_thread/thread/e347b370e8586767/ddf95bdb0fc6a9f7?lnk=raot
 		geoUrl = 'http://maps.google.com/maps/geo?'
 				+ '&key='+ googleApiKey
-				+ '&q='+ escape(addr)
+				+ '&q='+ encodeURI(addr)
 				+ '&sensor=false&output=json'
 				+ '&callback=?';
 		//geoUrl = 'http://maps.google.com/maps/geo?callback=?';
