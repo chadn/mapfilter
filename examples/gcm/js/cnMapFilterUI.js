@@ -956,7 +956,7 @@
 		// only script tag can bypass same-origin-policy, so use jsonp hack by adding callback=?
 		// note that URL limit is 1024 (?) chars, so can't send too much data
 		//$.post("http://chadnorwood.com/saveJson/", {sj: cnMF.reportData});
-		//$.getJSON("http://chadnorwood.com/saveJson/?callback=?", {sj: cnMF.reportData});
+		$.getJSON("http://chadnorwood.com/saveJson/?callback=?", {sj: cnMF.reportData});
 		
 		updateLoadingMap();
 	}
