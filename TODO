@@ -1,0 +1,42 @@
+What is the 'src' directory (ask Chad)?
+
+Remove external calls 
+  $.getJSON("http://chadnorwood.com/saveJson/?callback=?", {sj: cnMF.reportData}); 
+
+
+[DONE] Write a feature list. See http://chadnorwood.com/projects/gcm/#KeyFeatures
+
+[DONE] What happens when the list of events is too long? See vert slider in 
+   http://chadnorwood.com/gcm/?u=http://www.google.com/calendar/feeds/jo0ubvoi1gutr95kdtl1245u3g@group.calendar.google.com/public/basic
+
+[DONE] remove PHP code. See index.html
+
+[DONE] Create test calendar.  
+	https://www.google.com/calendar/feeds/0ei0284so407vu24o7o0q5ares%40group.calendar.google.com/public/basic
+
+[DONE] non-ascii characters break the geo-locating code. Removed encode(), use instead http://www.w3schools.com/jsref/jsref_encodeuri.asp
+
+[TRIVIAL] Change dates has a debug popup that should be removed
+
+[TRIVIAL] Add link to FAQ in information message: "The Following Events Had Addresses (Where) That Could Not Be Found. See FAQ" 
+	See FAQ.html for a start. 
+
+[EASY] Remove the "_ errors" in the top right box. It's redundant with the warning link that appears. 
+
+[EASY] When events are on the whole day, do not display time (second part of 2011-12-10 Sat 00:00)
+
+[EASY] Jump to an address, city, or zip - the zoom level should match the granularity: "Indiana" is a state-wide request. 
+
+[MEDIUM] Inform the user of inconsistencies (in the calendar entries). Use a javascript alert?
+
+[MEDIUM] plot icon on the map should bear information. For example, number of events at location. 
+
+[MEDIUM] Display several calendars at once: differentiate by color
+
+[MEDIUM] Inform the user for time-consuming operations (load calendar)
+
+[BUG] horizontal time slider filters OK the calendar table, but not the map (look for first chronolgical entry)
+
+[TEDIOUS] Translate application (add flags under the top right GCM logo; auto-detect language by IP)
+
+[???] Write an integration process: checkSyntax, minify, push to Web server
