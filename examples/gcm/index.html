@@ -86,10 +86,12 @@ function validateSize(value, min, max, def) {
 
 function validateURL(httpParamName) {
   var value = httpGetParam(httpParamName);
-  var regex = "https://www.google.com/calendar/feeds/[a-z0-9]*%40group.calendar.google.com/public/basic";
+  var regex = "https://www.google.com/calendar/feeds/\w+(%40|@)group.calendar.google.com/public/basic";
   regex = new RegExp( regex );
-  if (regex.exec( value )  == null )
-    return "";
+  if (regex.exec( value )  == null ) {
+	console.log("invalid calendar url:", value)
+	return "";
+}
   return value; 
 }
 
@@ -98,14 +100,14 @@ var maptype = validateInt('m',0,4, 0);
 var gZoomLevel = validateInt('z',1,20, 13); 
 var mapAllOnInit = (httpGetParam('z') != null ? 0 : 1) ; 
 
-// default to Rennes, France
-var ll = validateFloat('lng',-180,180, -1.6); 
-var lt = validateFloat('lat',-180,180, 48.1); 
+// default to Chicago
+var ll = validateFloat('lng',-180,180, -87.626072); 
+var lt = validateFloat('lat',-180,180, 41.885405); 
 
 
 // find events initially in this range
 var sday = validateDate('ed',0);  // start today (0 days from now)
-var eday = validateDate('sd',180); // end in 6 months
+var eday = validateDate('sd',42); // end in 6 weeks
 
 console.log ("sday="  + sday  + " eday="  + eday);
 
