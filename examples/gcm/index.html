@@ -1,184 +1,246 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
-    <title>Google Calendar Map</title>
-    <meta name="title" content="GoogleMap API Source Code Generator." />
-    <meta name="description" content="A way to view calendar events on a google map. Reading a public google calendar, it plots all the events on a map.  The map acts like a filter - you only see events that occur on the map canvas, which is great when there is a calendar with tons of events going on all over the place. " />
-    <meta name="keywords" content="Google Maps, Google Maps API, Google Calendar, Google Calendar API, AJAX, XML, JQUERY" />
-    <meta name="author" content="Chad Norwood. http://chadnorwood.com" />
-    <link type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.1/themes/base/jquery-ui.css" rel="stylesheet" />
-    <link type="text/css" href="css/jsDatePick_ltr.min.css" rel="stylesheet" />
-    <link type="text/css" href="css/jScrollPane.css" rel="stylesheet" />
-    <link type="text/css" href="css/mapFilter.css" rel="stylesheet" />
-    <script type="text/javascript" src="http://maps.google.com/maps?file=api&amp;v=2&amp;key=ABQIAAAAQ8l06ldZX6JSGI8gETtVhhTrRIj9DJoJiLGtM4J1SrTlGmVDcxQDT5BVw88R8j75IQxYlwFcEw6w9w"></script>
+	<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+		<title>Google Calendar Map</title>
+		<meta name="title" content="GoogleMap API Source Code Generator." />
+		<meta name="description" content="A way to view calendar events on a google map. Reading a public google calendar, it plots all the events on a map.  The map acts like a filter - you only see events that occur on the map canvas, which is great when there is a calendar with tons of events going on all over the place. " />
+		<meta name="keywords" content="Google Maps, Google Maps API, Google Calendar, Google Calendar API, AJAX, XML, JQUERY" />
+		<meta name="author" content="Chad Norwood. http://chadnorwood.com" />
+		<link type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.1/themes/base/jquery-ui.css" rel="stylesheet" />
+		<link type="text/css" href="css/jsDatePick_ltr.min.css" rel="stylesheet" />
+		<link type="text/css" href="css/jScrollPane.css" rel="stylesheet" />
+		<link type="text/css" href="css/mapFilter.css" rel="stylesheet" />
+		<script type="text/javascript" src="http://maps.google.com/maps?file=api&amp;v=2&amp;key=ABQIAAAAQ8l06ldZX6JSGI8gETtVhhTrRIj9DJoJiLGtM4J1SrTlGmVDcxQDT5BVw88R8j75IQxYlwFcEw6w9w"></script>
 
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.1/jquery-ui.js"></script>
-    <script type="text/javascript" src="js/jquery.ui.slider.chad.js"></script>
-    
-    <script type="text/javascript" src="js/jsDatePick.jquery.min.1.3.js"></script>
-    <script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
-    <script type="text/javascript" src="js/jquery.tablesorter.pager.js"></script>
-    <script type="text/javascript" src="js/json2.js"></script>
-    <script type="text/javascript" src="js/jScrollPane.js"></script> 
-    <script type="text/javascript" src="js/detect_timezone.js"></script>
-    <script type="text/javascript" src="js/ba-debug.js"></script>
-    <script type="text/javascript" src="js/cnMapFilter.js"></script>
-    <script type="text/javascript" src="js/cnMapFilterUI.js"></script>
-    <script type="text/javascript" src="js/ui.tabs.js"></script>
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.1/jquery-ui.js"></script>
+		<script type="text/javascript" src="js/jquery.ui.slider.chad.js"></script>
+		
+		<script type="text/javascript" src="js/jsDatePick.jquery.min.1.3.js"></script>
+		<script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
+		<script type="text/javascript" src="js/jquery.tablesorter.pager.js"></script>
+		<script type="text/javascript" src="js/json2.js"></script>
+		<script type="text/javascript" src="js/jScrollPane.js"></script> 
+		<script type="text/javascript" src="js/detect_timezone.js"></script>
+		<script type="text/javascript" src="js/ba-debug.js"></script>
+		<script type="text/javascript" src="js/cnMapFilter.js"></script>
+		<script type="text/javascript" src="js/cnMapFilterUI.js"></script>
+		<script type="text/javascript" src="js/ui.tabs.js"></script>
 	
-    <script type="text/javascript"> //<![CDATA[
-
-function httpGetParam( name )
-{
-  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
-  var regexS = "[\\?&]"+name+"=([^&#]*)";
-  var regex = new RegExp( regexS );
-  var results = regex.exec( window.location.href );
-  if( results == null )
-    return null;
-  else
-    return results[1];
-}
-
-function validateDate(httpParamName, def) {
-    var offset = httpGetParam(httpParamName); 
-    offset = parseInt(offset);
-    if (isNaN(offset))
-        offset = def;
-    offset = def;   // FIXME - this line should be deleted!
-    var date = new Date();
-    date.setDate(date.getDate()+offset);
-    var month = date.getMonth() + 1;
-    var day = date.getDate();
-    var year = date.getFullYear();
-    return year + "-" + month + "-" + day;
-}
-
-function validateFloat(httpParamName, min, max, def) {
-    var value = httpGetParam(httpParamName); 
-    value = parseFloat(value);
-    if (isNaN(value))
-        value = def;
-    if (value < min)
-        value = min;
-    if (max < value)
-        value = max;
-    return value;
-}
-
-function validateInt(httpParamName, min, max, def) {
-    var value = httpGetParam(httpParamName); 
-    value = parseInt(value);
-    if (isNaN(value))
-        value = def;
-    if (value < min)
-        value = min;
-    if (max < value)
-        value = max;
-    return value;
-}
-
-function validateSize(value, min, max, def) {
-    return def;
-}
-
-function validateURL(httpParamName) {
-  var value = httpGetParam(httpParamName);
-  var regex = "https://www.google.com/calendar/feeds/\w+(%40|@)group.calendar.google.com/public/basic";
-  regex = new RegExp( regex );
-  if (regex.exec( value )  == null ) {
-	console.log("invalid calendar url:", value)
-	return "";
-}
-  return value; 
-}
-
-// Configure here the values, from URL or default
-var maptype = validateInt('m',0,4, 0); 
-var gZoomLevel = validateInt('z',1,20, 13); 
-var mapAllOnInit = (httpGetParam('z') != null ? 0 : 1) ; 
-
-// default to Chicago
-var ll = validateFloat('lng',-180,180, -87.626072); 
-var lt = validateFloat('lat',-180,180, 41.885405); 
+		<script type="text/javascript"> //<![CDATA[
 
 
-// find events initially in this range
-var sday = validateDate('ed',0);  // start today (0 days from now)
-var eday = validateDate('sd',42); // end in 6 weeks
-
-console.log ("sday="  + sday  + " eday="  + eday);
-
-var map_size=validateSize('size',200,2000,200,2000, [800,600]);
-var xmlurl = validateURL('u'); 
-
-
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', 'UA-2767105-1']);
-    _gaq.push(['_trackPageview']);
-         
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', 'UA-2767105-1']);
+		_gaq.push(['_trackPageview']);
+		     
+		(function() {
+		  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
 
 	$(document).ready(function() {
-         //$("#xmlHelpButton").click(function() { $("#xmlHelpInfo").toggle(); });
+		//$("#xmlHelpButton").click(function() { $("#xmlHelpInfo").toggle(); });
+		// var myURL = parseURL('http://abc.com:8080/dir/index.html?id=255&m=hello#top');
+		var myURL = parseURL(window.location.href);
+		
+		// modified to support multiple params with same key, from http://james.padolsey.com/javascript/parsing-urls-with-the-dom/
+		function parseURL(url) {
+			var a =  document.createElement('a');
+			a.href = url;
+			
+			return {
+				source: url,
+				protocol: a.protocol.replace(':',''),
+				host: a.hostname,
+				port: a.port,
+				query: a.search,
+				params: (function(){
+					var ret = {},
+						seg = a.search.replace(/^\?/,'').split('&'),
+						len = seg.length, 
+						i = 0, s;
+					for (;i<len;i++) {
+						if (!seg[i]) { continue; }
+						s = seg[i].split('=');
+						if (ret[s[0]] && typeof ret[s[0]] == 'string') {
+							ret[s[0]] = [ ret[s[0]], s[1] ];
+						} else if (ret[s[0]] && typeof ret[s[0]] == 'object') {
+							ret[s[0]].push(s[1]);
+						} else {
+							ret[s[0]] = s[1];
+						}
+					}
+					return ret;
+				})(),
+				file: (a.pathname.match(/\/([^\/?#]+)$/i) || [,''])[1],
+				hash: a.hash.replace('#',''),
+				path: a.pathname.replace(/^([^\/])/,'/$1'),
+				relative: (a.href.match(/tps?:\/\/[^\/]+(.+)/) || [,''])[1],
+				segments: a.pathname.replace(/^\//,'').split('/')
+			};
+		}
 
 
-      function genLink(curData) {
-        clink = window.location.pathname +'?z='+ curData.mapZoom;
-        clink += '&lat='+ curData.mapCenterLt;
-        clink += '&lng='+ curData.mapCenterLg;
-        clink += '&m='+ curData.mapType;
-        clink += '&sd='+ curData.startDay;
-        clink += '&ed='+ curData.endDay;
-        clink += "&u=" + xmlurl;
-        return clink;
-      }
+		function httpGetParam( name ) {
+			name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+			var regexS = "[\\?&]"+name+"=([^&#]*)";
+			var regex = new RegExp( regexS );
+			var results = regex.exec( window.location.href );
+			console.log("httpGetParam()", name, results);
+			if( results == null )
+				return null;
+			else
+				return results[1];
+		}
 
-  
-    //
-    // init mapFilter via UI wrapper
-    //
-	cnMFUI.init({
+		function httpGetParam( name ) {
+			name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+			var regexS = "[\\?&]"+name+"=([^&#]*)";
+			var regex = new RegExp( regexS );
+			var results = regex.exec( window.location.href );
+			console.log("httpGetParam()", name, results);
+			if( results == null )
+				return null;
+			else
+				return results[1];
+		}
 
-      // For more info on options, see 'defaults'
-      containerId: "containerId",
-      mapId: "MapID",
-      listId: "tableTab",
-      statusId: "MapStatus",
-      mapCenterLt: lt,
-      mapCenterLg: ll,
-      mapZoom: gZoomLevel,
-      mapType: maptype,
-      mapAllOnInit: mapAllOnInit,
-	  
-      gCalUrl: xmlurl,
-      startDay: sday,
-      endDay: eday,
-      googleApiKey: "ABQIAAAAQ8l06ldZX6JSGI8gETtVhhTrRIj9DJoJiLGtM4J1SrTlGmVDcxQDT5BVw88R8j75IQxYlwFcEw6w9w",
+		function validateDate(httpParamName, def) {
+				var offset = httpGetParam(httpParamName); 
+				offset = parseInt(offset);
+				if (isNaN(offset)) {
+					offset = def;
+				}
+				var date = new Date();
+				date.setDate(date.getDate()+offset);
+				var month = date.getMonth() + 1;
+				var day = date.getDate();
+				var year = date.getFullYear();
+				return year + "-" + month + "-" + day;
+		}
 
-      mapChangeCallback: function (curData) {
-        msg = "<a href='"+ genLink(curData)+"' class='jumpLink' title='Click to load URL of this map in its current state (same zoom, coords, start and end dates). Copy and paste it for email, IM, etc.'>Map Link</a>";
-        $("#MapStatus").append(msg);
-      }
-    });
-         }); // end document ready
+		function validateFloat(httpParamName, min, max, def) {
+				var value = httpGetParam(httpParamName); 
+				value = parseFloat(value);
+				if (isNaN(value))
+					value = def;
+				if (value < min)
+					value = min;
+				if (max < value)
+					value = max;
+				return value;
+		}
 
-    //]]></script>
+		function validateInt(httpParamName, min, max, def) {
+				var value = httpGetParam(httpParamName); 
+				value = parseInt(value);
+				if (isNaN(value))
+					value = def;
+				if (value < min)
+					value = min;
+				if (max < value)
+					value = max;
+				return value;
+		}
+
+		function validateSize(value, min, max, def) {
+				return def;
+		}
+
+		function validateURL(httpParamName) {
+			var value = httpGetParam(httpParamName);
+			console.log("param, val = ", httpParamName, value);
+
+			var regex = "https://www.google.com/calendar/feeds/\w+(%40|@)group.calendar.google.com/public/basic";
+			regex = new RegExp( regex );
+			if (regex.exec( value )  == null ) {
+				console.log("invalid calendar url:", value)
+				return "";
+			}
+			return value; 
+		}
+
+		// Configure here the values, from URL or default
+		var maptype = validateInt('m',0,4, 0); 
+		var gZoomLevel = validateInt('z',1,20, 13); 
+		var mapAllOnInit = (httpGetParam('z') != null ? 0 : 1) ; 
+
+		// default to Chicago
+		var ll = validateFloat('lng',-180,180, -87.626072); 
+		var lt = validateFloat('lat',-180,180, 41.885405); 
+
+
+		// find events initially in this range
+		var sday = validateDate('sd',0);  // start today (0 days from now)
+		var eday = validateDate('ed',42); // end in 6 weeks
+
+		console.log ("sday="  + sday  + " eday="  + eday);
+
+		var map_size=validateSize('size',200,2000,200,2000, [800,600]);
+		//var xmlurl = validateURL('u'); 
+		var xmlurl = httpGetParam('u');
+
+		
+		
+		function genLink(curData) {
+			clink = window.location.pathname +'?z='+ curData.mapZoom;
+			clink += '&lat='+ curData.mapCenterLt;
+			clink += '&lng='+ curData.mapCenterLg;
+			clink += '&m='+ curData.mapType;
+			clink += '&sd='+ curData.startDay;
+			clink += '&ed='+ curData.endDay;
+			$.each(['u','gc','gcg','gci'], function(index, param) { 
+				clink += '&' + param + '=' + myURL.params[param];
+			});
+			//clink += "&u=" + xmlurl;
+			// clink += "&u" + (typeof myURL.params.u == 'string' ? [myURL.params.u] : myURL.params.u)
+			return clink;
+		}
+
+	
+		//
+		// init mapFilter via UI wrapper
+		//
+		cnMFUI.init({
+			// For more info on options, see 'defaults'
+			containerId: "containerId",
+			mapId: "MapID",
+			listId: "tableTab",
+			statusId: "MapStatus",
+			mapCenterLt: lt,
+			mapCenterLg: ll,
+			mapZoom: gZoomLevel,
+			mapType: maptype,
+			mapAllOnInit: mapAllOnInit,
+
+			gCalURLs: typeof myURL.params.u == 'string' ? [myURL.params.u] : myURL.params.u,
+			gCalGroups: myURL.params.gcg,
+			gCalImports: myURL.params.gci,
+			gCalEmails: myURL.params.gc,
+			startDay: sday,
+			endDay: eday,
+			googleApiKey: "ABQIAAAAQ8l06ldZX6JSGI8gETtVhhTrRIj9DJoJiLGtM4J1SrTlGmVDcxQDT5BVw88R8j75IQxYlwFcEw6w9w",
+
+			mapChangeCallback: function (curData) {
+				msg = "<a href='"+ genLink(curData)+"' class='jumpLink' title='Click to load URL of this map in its current state (same zoom, coords, start and end dates). Copy and paste it for email, IM, etc.'>Map Link</a>";
+				$("#MapStatus").append(msg);
+			}
+		});
+	}); // end document ready
+
+		//]]></script>
 	<!--
-    <script type='text/javascript' src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script>
-    NOTE: comment out above firebug-lite in production 
-    -->
+		<script type='text/javascript' src='http://getfirebug.com/releases/lite/1.2/firebug-lite-compressed.js'></script>
+		NOTE: comment out above firebug-lite in production 
+		-->
 
 
-  </head>
-  <body onunload="GUnload();">
-  	<div id="containerId" class="containerWrap">
+	</head>
+	<body onunload="GUnload();">
+		<div id="containerId" class="containerWrap">
 	</div>
 
 <div id="myHelp" style="display:none; float:left; text-align:left;" >
@@ -196,7 +258,9 @@ var xmlurl = validateURL('u');
 			<li><a class="actionable" href="?ed=180&u=https://www.google.com/calendar/feeds/dnr6osjdrtn4fqpf70ep8ck1rc%40group.calendar.google.com/public/basic">Chad's Chicago: Summer Festivals and More</a></li>
 			<li><a class="actionable" href="?u=http://www.google.com/calendar/feeds/jo0ubvoi1gutr95kdtl1245u3g@group.calendar.google.com/public/basic">A New York Track Club</a><br></li>
 			<li><a class="actionable" href="?sd=2011-01-01&ed=2011-12-31&u=http://www.google.com/calendar/feeds/asa5k2phscdna68j9e5410v6mc@group.calendar.google.com/public/basic">2011 Trail Races</a></li>
-			<li><a class="actionable" href="?u=http://www.google.com/calendar/feeds/tour%2540darrellsurvey.com/public/basic">Golf Survey Tour</a></li>
+			<li><a class="actionable" href="?u=https://www.google.com/calendar/feeds/yvettebikesfortheworld@gmail.com/public/basic">Collections (Bikes For The World)</a></li>
+			<li><a class="actionable" href="?u=https://www.google.com/calendar/feeds/webdog6@gmail.com/public/basic">Sunset District Events Calendar (San Francisco)</a></li>
+			<li><a class="actionable" href="?ed=21&gc=webdog6@gmail.com,yvettebikesfortheworld@gmail.com,jo0ubvoi1gutr95kdtl1245u3g@group.calendar.google.com,dnr6osjdrtn4fqpf70ep8ck1rc@group.calendar.google.com,asa5k2phscdna68j9e5410v6mc@group.calendar.google.com">All 5 calendars above at once!</a> &lt;--- NEW !!! </li>
 			<li><a class="actionable" href="?ed=180&u=https://www.google.com/calendar/feeds/edbd7jqqu7s83ndvv276mueeig%40group.calendar.google.com/public/basic">Aikido</a></li>
 			<li><a class="actionable" href="?ed=180&u=https://www.google.com/calendar/feeds/0ei0284so407vu24o7o0q5ares%40group.calendar.google.com/public/basic">Test</a></li>
 			</ol>
@@ -223,5 +287,5 @@ var xmlurl = validateURL('u');
 	</div>
 </div>
 
-  </body>
+	</body>
 </html>

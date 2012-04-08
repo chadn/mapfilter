@@ -52,6 +52,7 @@
 	var mapClickListener = false,
 		mapDragstartListener = false,
 		lastUpdate4MapLoad = false,
+		moreThanOneCal = false,
 		emptyTableHtml = "<td>nope</td><td>no match</td><td>uh-uh</td><td>nowhere</td>";
 
 	/*
@@ -61,17 +62,16 @@
 	urlIconDefault = "http://www.google.com/mapfiles/marker.png",
 	urlIconOrange = "http://gmaps-samples.googlecode.com/svn/trunk/markers/orange/blank.png",
 	urlIconBlue  = "http://gmaps-samples.googlecode.com/svn/trunk/markers/blue/blank.png",
-	mapVersion = "Map Version 2011-3-12";
-
-	// end variables
+	mapVersion = "Map Version 2012-4-8";
 
 	cnMF.reportData.loadTime = (startMs2 +'').replace(/(\d{3})$/,".$1") // add period so its secs.msec
 	cnMF.reportData.userInteracted = false;
 
-	  function init() {
+	function init() {
 
-		debug.log('mapfilter().init(), cnMF:',cnMF);
 		var timezone = jstz.determine_timezone(); // https://bitbucket.org/pellepim/jstimezonedetect/wiki/Home
+		var calendarURLs = getCalendarURLs();
+		debug.log('mapfilter().init(), cnMF:',cnMF);
 		initDivs();
 		myGmap = initGMap();
 		//updateSizes();
@@ -99,23 +99,27 @@
 
 		// check for data sources and add them
 		//
-		if (cnMFUI.opts.gCalUrl && cnMFUI.opts.gCalUrl != 'u') {
+		if (calendarURLs.length) {
 			$('#calendarTitleContent').html("<h3><a href=''>Loading Calendar.. </a></h3>");
-			updateStatus('Map Loaded, Loading <a href="'+cnMFUI.opts.gCalUrl+'">Calendar</a> ..');
+			updateStatus('Map Loaded, Loading '+ calendarURLs.length +' Calendar(s) ..');
 			//$('#calendarDiv').html('');
 			initResults();
-			// TODO: create a cnMF.showDates(start,end) which gets from google calendar if required
-			if (cnMFUI.opts.gCalUrl == 'test1') {
-				fakeGCalData();
-			} else if (cnMFUI.opts.gCalUrl == 'test2') {
-				getXmlData();
-			} else {
-				_gaq.push(['_trackEvent', 'Loading', 'calender-u', cnMFUI.opts.gCalUrl]);
-				cnMF.getGCalData(cnMFUI.opts.gCalUrl, cnMF.origStartDay, cnMF.origEndDay, {
-						onCalendarLoad: cbCalendarLoad,
-						onGeoDecodeAddr: cbGeoDecodeAddr,
-						onGeoDecodeComplete: cbGeoDecodeComplete
-					});
+			for (var ii = 0; ii < calendarURLs.length; ii++) {
+				var gCalURL = calendarURLs[ii];
+				// TODO: create a cnMF.showDates(start,end) which gets from google calendar if required
+				if (gCalURL == 'test1') {
+					fakeGCalData();
+				} else if (gCalURL == 'test2') {
+					getXmlData();
+				} else {
+					_gaq.push(['_trackEvent', 'Loading', 'calender-u', gCalURL]);
+					cnMF.getGCalData(gCalURL, cnMF.origStartDay, cnMF.origEndDay, {
+							onCalendarLoad: cbCalendarLoad,
+							onGeoDecodeAddr: cbGeoDecodeAddr,
+							onGeoDecodeComplete: cbGeoDecodeComplete
+						});
+				}
+				
 			}
 		} else {
 			updateStatus('Map Loaded.');
@@ -134,8 +138,37 @@
 		debug.log("mapFilter().init() Completed.");
 	  }
 
-
-	  function initDivs() {
+	function getCalendarURLs() {
+		var calendarURLs = [];
+		
+		if (cnMFUI.opts.gCalURLs) {
+			if (Object.prototype.toString.call(cnMFUI.opts.gCalURLs) != '[object Array]') {
+				console.error("gCalURLs must be an array, not "+ typeof cnMFUI.opts.gCalURLs, cnMFUI.opts.gCalURLs);
+				return [];
+			}
+			for (var ii = 0; ii < cnMFUI.opts.gCalURLs.length; ii++) {
+				calendarURLs.push(cnMFUI.opts.gCalURLs[ii]);
+			}
+		}
+		if (cnMFUI.opts.gCalGroups) { // gcg=xxx,yyy
+			$.each(cnMFUI.opts.gCalGroups.split(','), function(index, value) { 
+				calendarURLs.push("https://www.google.com/calendar/feeds/"+ value + "%40group.calendar.google.com/public/basic");
+			});
+		}
+		if (cnMFUI.opts.gCalImports) { // gci=xxx,yyy
+			$.each(cnMFUI.opts.gCalImports.split(','), function(index, value) { 
+				calendarURLs.push("https://www.google.com/calendar/feeds/"+ value + "%40import.calendar.google.com/public/basic");
+			});
+		}
+		if (cnMFUI.opts.gCalEmails) { // gc=xxx@groups.calendar.google.com,yyy@my.domain.com
+			$.each(cnMFUI.opts.gCalEmails.split(','), function(index, value) { 
+				calendarURLs.push("https://www.google.com/calendar/feeds/"+ value + "/public/basic");
+			});
+		}
+		moreThanOneCal = calendarURLs.length > 1;
+		return calendarURLs;
+	}
+	function initDivs() {
 
 		// this html does not belong in javascript, but keeping here to aid in prototype development
 	  	$('#'+cnMFUI.opts.containerId).html(
@@ -716,6 +749,7 @@
 		  //infoHTML = "<div class=\"IW\"><h1>"+ kk['n'] +"<\/h1><div id=\"IWContent\">"+ desc +"</div>"+footer+"</div>";
 
 		  kk.infoHtml = "<div class='IW'><h1>"+ kk.name +"<\/h1>";
+		  kk.infoHtml += moreThanOneCal ? '<h3>Calendar: '+kk.calTitle+'</h3>' : '';
 		  kk.infoHtml += "<div id='IWContent' class='preWrapped'>"+ cnMFUI.maxStr( addLinks(kk.desc), 900, 26, kk.url) +"</div>";
 		  kk.infoHtml += '<div id="IWZoom">';
 		  kk.infoHtml += cnMF.formatDate(kk.dateStart, 'F D, l gx') +"-"+ cnMF.formatDate(kk.dateEnd, 'gx') +"<br>";
@@ -857,49 +891,91 @@
 		  });
 	  }
 
-	function cbCalendarLoad() {
+		/*
+		calendarInfo.gCalUrl = gCalUrl;
+		calendarInfo.totalEntries = ii;
+		calendarInfo.totalEvents = cdata.feed.openSearch$totalResults.$t || ii;		
+		calendarInfo.gcTitle = cdata.feed.title ? cdata.feed.title['$t'] : 'title unknown';
+		calendarInfo.gcLink = cdata.feed.link ? cdata.feed.link[0]['href'] : '';
+		calendarInfo.desc = cdata.feed.subtitle ? cdata.feed.subtitle['$t'] : 'subtitle unknown';
+		*/
 
-		document.title = document.title +" - "+ cnMF.gcTitle;
+	function cbCalendarLoad(calendarInfo) {
+		var html,
+		    titles = [],
+		    totalEvents = 0;
 		
-		updateStatus("<a title='Click to view Full Calendar' class='actionable' href='"+ cnMF.gcLink +"'>"
-			+ cnMF.gcTitle +"</a><br>Mapping Events ... ");
-		$('#calendarTitleContent').html("<h3><a title='"+cnMF.desc+" - Click to view calendar in new window' "
-			+"class='jumpLink' target='_blank' href='"+ cnMF.gcLink +"'>"+ cnMF.gcTitle +"</a></h3>");
-
-		html = '<span>Calendar has '+ cnMF.totalEvents + (cnMF.totalEvents==cnMF.totalEntries ? ''
-				:' (<span class="titleDesc" title="Counted '+cnMF.totalEntries+' entries even though feed said '
-				+cnMF.totalEvents+' total">'+cnMF.totalEntries+'</span>)')
-			+' events <nobr>from '+ cnMF.formatDate(startDate, 'Y-n-D') +'</nobr>'
-			+' <nobr>to '+ cnMF.formatDate(endDate, 'Y-n-D')  +'</nobr>'
-			+' &nbsp; <nobr><a id="changeDates" class="actionable" href="#" title='
-			+'"Click to choose new start and end dates and reload page">Change dates</a></nobr>'
-			+ '</span><div id="newDates"></div>';
-		$('#calendarTitleContent').append(html);
-		_gaq.push(['_trackEvent', 'Loading', 'calenders', 'cnMF.totalEvents', cnMF.totalEvents]);
-		_gaq.push(['_trackEvent', 'Loading', 'calender-cnMF.gcLink', cnMF.gcLink]);
-
-		$('#changeDates').click(function(){
-			_gaq.push(['_trackEvent', 'Interaction', 'changeDates']);
-			setupChangeDates();
+		cnMF.calData = cnMF.calData || {};
+		cnMF.calData[calendarInfo.gCalUrl] = calendarInfo;
+		
+		$.each(cnMF.calData, function(gCalUrl, calendarInfo) {
+			totalEvents += calendarInfo.totalEvents;
+			titles.push(calendarInfo.gcTitle);
 		});
+		
+		// check to see if we are processing more than one calendar or not.
+		if (cnMF.validCalendars) {
+			cnMF.validCalendars++;
+			document.title = "GCM "+ cnMF.validCalendars + " valid calendars";
+			
+			updateStatus("<a title='Click to view Full Calendar' class='actionable' href='"+ calendarInfo.gcLink +"'>"
+				+ calendarInfo.gcTitle +"</a><br>Mapping Events ... ");
+				
+			$('#calendarTitleContent').html('<h3><a title="'+ titles.join(" -- ") + '"'
+				+' class="jumpLink" target="_blank" href="">Showing '+ cnMF.validCalendars +' Valid Calendars</a></h3>'
+				+' <span>'+ cnMF.validCalendars +' Calendars have '+ totalEvents
+				+' events <nobr>from '+ cnMF.formatDate(startDate, 'Y-n-D') +'</nobr>'
+				+' <nobr>to '+ cnMF.formatDate(endDate, 'Y-n-D')  +'</nobr>'
+				+' &nbsp; <nobr><a id="changeDates" class="actionable" href="#" title='
+				+'"Click to choose new start and end dates and reload page">Change dates</a></nobr>'
+				+ '</span><div id="newDates"></div>');
+		} else {
+			cnMF.validCalendars = 1;
+			document.title = "GCM - "+ calendarInfo.gcTitle;
 
-		$('#cancelChangeDates').click(function(){
-			_gaq.push(['_trackEvent', 'Interaction', 'cancelChangeDates']);
-			$("#newDates").css('display','none');
-		});
-		$('#thDate').attr('title','Click to Sort by Event Date, Timezone '+cnMF.tz.name);
+			updateStatus("<a title='Click to view Full Calendar' class='actionable' href='"+ calendarInfo.gcLink +"'>"
+				+ calendarInfo.gcTitle +"</a><br>Mapping Events ... ");
 
-		//updateStatus2('Found '+ cnMF.totalEvents +' ('+cnMF.totalEntries+') events, '+ uniqAddrCount +' unique addresses, decoding .. ');
-		updateStatus2('Found '+ cnMF.myGeo.numAddresses +' events, '+ cnMF.myGeo.numUniqAddresses +' unique addresses, decoding .. ');
+			$('#calendarTitleContent').html("<h3><a title='"+calendarInfo.desc+" - Click to view calendar in new window' "
+				+"class='jumpLink' target='_blank' href='"+ calendarInfo.gcLink +"'>"+ calendarInfo.gcTitle +"</a></h3>"
+				+ '<span>Calendar has '+ calendarInfo.totalEvents + (calendarInfo.totalEvents==calendarInfo.totalEntries ? ''
+					:' (<span class="titleDesc" title="Counted '+calendarInfo.totalEntries+' entries even though feed said '
+					+calendarInfo.totalEvents+' total">'+calendarInfo.totalEntries+'</span>)')
+				+' events <nobr>from '+ cnMF.formatDate(startDate, 'Y-n-D') +'</nobr>'
+				+' <nobr>to '+ cnMF.formatDate(endDate, 'Y-n-D')  +'</nobr>'
+				+' &nbsp; <nobr><a id="changeDates" class="actionable" href="#" title='
+				+'"Click to choose new start and end dates and reload page">Change dates</a></nobr>'
+				+ '</span><div id="newDates"></div>');
+
+			$('#changeDates').click(function(){
+				_gaq.push(['_trackEvent', 'Interaction', 'changeDates']);
+				setupChangeDates();
+			});
+
+			$('#cancelChangeDates').click(function(){
+				_gaq.push(['_trackEvent', 'Interaction', 'cancelChangeDates']);
+				$("#newDates").css('display','none');
+			});
+			$('#thDate').attr('title','Click to Sort by Event Date, Timezone '+cnMF.tz.name);
+
+		}
+		
+		_gaq.push(['_trackEvent', 'Loading', 'calenders', 'calendarInfo.totalEvents', calendarInfo.totalEvents]);
+		_gaq.push(['_trackEvent', 'Loading', 'calender-calendarInfo.gcLink', calendarInfo.gcLink]);
+
+		//updateStatus2('Found '+ calendarInfo.totalEvents +' ('+calendarInfo.totalEntries+') events, '+ uniqAddrCount +' unique addresses, decoding .. ');
+		cnt = cnMF.myGeo.count();
+		
+		updateStatus2('Found '+ cnMF.myGeo.numAddresses +' events, '+ cnt.uniqAddrTotal +' unique addresses, decoding .. ');
 	}
 
-	// cbGeoDecodeComplete() called everytime we get a response from the internet
+	// cbGeoDecodeAddr() called everytime we get a response from the internet
 	function cbGeoDecodeAddr () {
 		cnt = cnMF.myGeo.count();
 		updateStatus2(cnt.uniqAddrDecoded +' of '+ cnt.uniqAddrTotal +' decoded<br>' + cnt.uniqAddrErrors +' errors' );
-		cnMF.reportData['uniqAddrDecoded'] = cnt.uniqAddrDecoded;
-		cnMF.reportData['uniqAddrTotal'] = cnt.uniqAddrTotal;
-		cnMF.reportData['uniqAddrErrors'] = cnt.uniqAddrErrors;
+		cnMF.reportData.uniqAddrDecoded = cnt.uniqAddrDecoded;
+		cnMF.reportData.uniqAddrTotal  = cnt.uniqAddrTotal;
+		cnMF.reportData.uniqAddrErrors = cnt.uniqAddrErrors;
 		
 		// if user has NOT interacted with map, 
 		// AND its been over 3000 ms since last updated map with results from
@@ -939,7 +1015,7 @@
 			mapRedraw();
 		}
 	}
-	// cbGeoDecodeComplete() called once all addresses are decoded
+	// cbGeoDecodeComplete() called once all addresses are decoded for a given calendar
 	function cbGeoDecodeComplete() {
 		debug.log("cbGeoDecodeComplete() begins");
 		//if (cnMFUI.opts.mapCenterLt == cnMFUI.defaults.mapCenterLt)

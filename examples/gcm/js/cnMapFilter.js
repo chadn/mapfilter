@@ -26,7 +26,7 @@
 		debug && debug.setLevel(parseInt(lvl[1],10));
 		//console.log("setLevel=",lvl[1]);
 	} else {
-		debug && debug.setLevel(0); // turns off all logging
+		debug && debug.setLevel(9); // turns off all logging
 	}
 	debug.includeMsecs(true);
 
@@ -208,6 +208,11 @@
 		cnMF.tz.name = coreOptions.tzName ? coreOptions.tzName : 'unknown'; // Olson database timezone key (ex: Europe/Berlin)
 		cnMF.tz.dst = coreOptions.tzDst ? coreOptions.tzDst : 'unknown'; // bool for whether the tz uses daylight saving time
 		cnMF.tz.computedFromBrowser = (cnMF.tz.name != 'unknown');
+		
+		cnMF.myGeo = cnMF.geocodeManager({
+			googleApiKey: cnMF.googleApiKey,
+		});
+		
 	}
 
 	cnMF.countTotal = function () {
@@ -243,6 +248,26 @@
 		cnMF.types.push(e);
 		return e;
 	}
+
+	cnMF.addCal = function(gCalUrl, calData){ 
+		console.log("cnMF.addCal", gCalUrl, calData);
+		
+		if (!cnMF.calData) {
+			cnMF.calData = {};
+		}
+		cnMF.calData[gCalUrl] = calData;
+
+		//$.extend(cnMF, calData); // TODO2 this overwrites, figure out better way to display multiple calendar names
+		/*
+		calendarInfo.gCalUrl = gCalUrl;
+		calendarInfo.totalEntries = ii;
+		calendarInfo.totalEvents = cdata.feed.openSearch$totalResults.$t || ii;		
+		calendarInfo.gcTitle = cdata.feed.title ? cdata.feed.title['$t'] : 'title unknown';
+		calendarInfo.gcLink = cdata.feed.link ? cdata.feed.link[0]['href'] : '';
+		calendarInfo.desc = cdata.feed.subtitle ? cdata.feed.subtitle['$t'] : 'subtitle unknown';
+		*/
+	}
+
 
 	//
 	// mapAllEvents() adjusts zoom and coords in order to fit all events on map
@@ -419,33 +444,29 @@
 			debug.info("Displaying calendar times using this timezone: "+ gCalObj.ctz);
 		}
 		$.getJSON(gCalUrl + "?alt=json-in-script&callback=?", gCalObj, function(cdata) {
-			parseGCalData(cdata, startDate, endDate, callbacks);
+			parseGCalData(gCalUrl, cdata, startDate, endDate, callbacks);
 		});
 	}
 
-	function parseGCalData (cdata, startDate, endDate, callbacks ) {
+	function parseGCalData (gCalUrl, cdata, startDate, endDate, callbacks ) {
+		var calendarInfo = {},
+		    uniqAddr = {};
 
 		debug.info("parseGCalData() calendar data: ",cdata);
 
-		cnMF.gcTitle = cdata.feed.title ? cdata.feed.title['$t'] : 'title unknown';
-		cnMF.gcLink = cdata.feed.link ? cdata.feed.link[0]['href'] : '';
-		cnMF.desc = cdata.feed.subtitle ? cdata.feed.subtitle['$t'] : 'subtitle unknown';
-		cnMF.reportData['fn'] = cnMF.gcTitle.replace(/\W/,"_");
-		cnMF.gcTitle = cdata.feed.title ? cdata.feed.title['$t'] : 'title unknown';
+		calendarInfo.gCalUrl = gCalUrl;
+		calendarInfo.gcTitle = cdata.feed.title ? cdata.feed.title['$t'] : 'title unknown';
+		calendarInfo.gcTitle.replace(/"/,'&quot;');
+		calendarInfo.gcLink = cdata.feed.link ? cdata.feed.link[0]['href'] : '';
+		calendarInfo.desc = cdata.feed.subtitle ? cdata.feed.subtitle['$t'] : 'subtitle unknown';
+		
+		// TODO2 move this to a method
 		if (!cnMF.tz.computedFromBrowser) {
 			cnMF.tz.name = cdata.feed.gCal$timezone.value;
 			debug.info("Displaying calendar times using calendar timezone: "+ cnMF.tz.name);
+			// TODO2 count in analytics how many people use timezones in browser vs calendar
 		}
-		var uniqAddr={};
 
-		/* do we need this at all anymore?
-		eType = cnMF.addEventType({
-		  tableHeadHtml: "<td>one</td><td>two</td>",
-		  tableCols: [3,5],
-		  title: cnMF.gcTitle,
-		  titleLink: cnMF.gcLink
-		});
-		*/
 		for (var ii=0; cdata.feed.entry && cdata.feed.entry[ii]; ii++) {
 			var curEntry = cdata.feed.entry[ii];
 			if (!(curEntry['gd$when'] && curEntry['gd$when'][0]['startTime'])) {
@@ -463,6 +484,7 @@
 			}
 			kk = cnMF.addEvent({
 				//type: eType.id,
+				calTitle: calendarInfo.gcTitle,
 				name: curEntry['title']['$t'],
 				desc: curEntry['content']['$t'],
 				addrOrig: curEntry['gd$where'][0]['valueString'] || '',  // addrOrig is the location field of the event
@@ -481,30 +503,32 @@
 			}
 			debug.log("parsed curEntry "+ii+": ", kk.name, curEntry, kk);
 		}
-		cnMF.totalEntries = ii;
-		cnMF.totalEvents = cdata.feed.openSearch$totalResults.$t || cnMF.totalEntries;
+		calendarInfo.totalEntries = ii;
+		calendarInfo.totalEvents = cdata.feed.openSearch$totalResults.$t || ii;		
+		cnMF.addCal(gCalUrl, calendarInfo);
+		cnMF.reportData['fn'] = calendarInfo.gcTitle.replace(/\W/,"_");
 
 		debug.log("calling mapfilter.geocode(): ", uniqAddr );
 		cnMF.myGeoDecodeComplete = false;
-		cnMF.myGeo = cnMF.geocodeManager({
-			addresses: uniqAddr,
-			googleApiKey: cnMF.googleApiKey,
-			geocodedAddrCallback: function (gObj) {
+		cnMF.myGeo.addr2coords( uniqAddr,
+			function (gObj) {
 				cnMF.processGeocode(gObj); // TODO: this can be private
 				if ('function' === typeof callbacks.onGeoDecodeAddr) callbacks.onGeoDecodeAddr();
 			},
-			geocodeCompleteCallback: function() {
+			function() {
 				//onGeoDecodeComplete();
 				cnMF.myGeoDecodeComplete = true;
 				if ('function' === typeof callbacks.onGeoDecodeComplete) callbacks.onGeoDecodeComplete();
 			}
-		});
-		if ('function' === typeof callbacks.onCalendarLoad) callbacks.onCalendarLoad();
+		);
+		if ('function' === typeof callbacks.onCalendarLoad) {
+			callbacks.onCalendarLoad(calendarInfo);
+		}
 	}
 
 
 	// geocodeManager handles the geocoding of addresses
-	//
+	//	
 	// TODO: use more than just google maps api
 	//
 	// http://tinygeocoder.com/blog/how-to-use/
@@ -518,16 +542,58 @@
 	///
 	cnMF.geocodeManager = function( gOpts ) {
 
+
+	//  goal:
+	// public function
+	// GeocodeManager.stats() -  returns stats object - (num unique addresses, num resolved, etc)
+
+	// private functions
+
+
 		// count addreses and unique addreses.
 		// don't want duplicates - wasting calls to google
-		var uniqAddresses = {};
-		var numAddresses = numUniqAddresses = numUniqAddrDecoded = numUniqAddrErrors = 0;
-		var geoCache = {};
+		
+		var GeocodeManager = {}, // return obj
+		    addrObjects = [],  // stores all address objects
+		    resolveRequests = [],   // array of requestObjects, each obj has add, cb1, cb2
 
-		var numReqs = 0;
-		var startTime = new Date().getTime();
+		    //uniqAddresses = {}, // stores addr objects
+		    numAddresses = 0,
+		    //numUniqAddresses = 0,
+		    //numUniqAddrDecoded = 0,
+		    //numUniqAddrErrors = 0,
+		    geoCache = {},
+		    googleApiKey,
+		    numReqs = 0,
+		    startTime = new Date().getTime(),
 
-		//  won't stop till all address objects are resolved (resolved==true)
+		    // Google specific geocoding variables
+		    desiredRate = 100, // long-term average should be one query every 'desiredRate' ms
+		    maxBurstReq = 4,   // if timeout gets delayed, say 500ms, we can send 'maxBurstReq' at a time till we catch up
+		    maxRetry = 4;
+
+		GeocodeManager.init = function() {
+			googleApiKey = gOpts.googleApiKey;
+		}
+		
+		
+		GeocodeManager.count = function() {
+			var c = {
+				uniqAddrDecoded: 0,
+				uniqAddrErrors: 0,
+				uniqAddrTotal: 0
+			}
+			for (var addr in geoCache) {
+				ao = geoCache[addr];
+				c.uniqAddrTotal++;
+				if (ao.resolved && ao.validCoords) c.uniqAddrDecoded++;
+				if (ao.resolved && !ao.validCoords) c.uniqAddrErrors++;
+			}
+			return c;
+		}
+		
+		
+		//  GeocodeManager won't stop till all address objects are resolved (resolved==true)
 		//  when resolved is true, then if (validCoords) it was successful
 		//  otherwise look to error
 		//
@@ -542,38 +608,130 @@
 			this.lt = '';
 			this.lg = '';
 		}
-
-		function geoMgrInit(){
-			for (var ii in gOpts.addresses) {
+		function deDup(addresses) {
+			var uniqAddresses = {}, // stores addr objects
+				ret = [];
+			for (var ii in addresses) {
 				if (!(ii.length > 0)) {
 					debug.warn("geocodeManager-geoMgrInit() skipping blank address");
 					continue;
 				}
 				numAddresses++;
 				if (!isNaN(ii)) {
-					uniqAddresses[gOpts.addresses[ii]] = 1; // array
+					uniqAddresses[addresses[ii]] = 1; // array
+					console.log("CHAD TODO2 xx1", ii);
 				} else {
+					console.log("CHAD TODO2 xx2", ii);
 					uniqAddresses[ii] = 1; // object or string
 				}
 			}
-			for (var addr in uniqAddresses) {
-				if (geoCache[addr]) {
-					gOpts.geocodedAddrCallback(geoCache[addr]);
+			for (var ii in addresses) {
+				ret.push(ii);
+			}
+			return ret;
+		}
+
+		// GeocodeManager.addr2coords(addresses, cb1, cbAll) - resolve a list of addresses
+		//    addresses - object - key is address string, where each address string will map to a address object. 
+		//    cb1 - callback function - called when an address is resolved
+		//    cbAll - callback function - called when all addresses are resolved.  cb1 is not called after this.
+	
+		GeocodeManager.addr2coords = function(addresses, cb1, cbAll) {
+			var uniqAddresses = deDup(addresses);
+			// store request
+			resolveRequests.push({
+				state: 'new',
+				addressesNew: uniqAddresses,
+				addressesResolved: [],
+				cb1 : cb1, 
+				cbAll : cbAll
+			});
+			
+			for (var ii = 0; ii < uniqAddresses.length; ii++) {
+				if (!geoCache[uniqAddresses[ii]]) {
+					geoCache[uniqAddresses[ii]] = new addrObject(uniqAddresses[ii]);
+				}
+			}
+			checkRequests();
+			googleGeocodeQueue();
+		}
+
+
+		// compares resolveRequests against geoCache and does callbacks if addresses are resolved
+		// returns true if all request addresses are resolved, false if still need resolution.
+		function checkRequests() {
+			var curReq,
+			    allResolved = true,
+			    addrNotResolved,
+			    addr;
+			
+			for (var ii = 0; ii < resolveRequests.length; ii++) {
+				curReq = resolveRequests[ii],
+				addrNotResolved = [];
+				
+				if (curReq.state === 'allResolved') {
 					continue;
 				}
-				geoCache[addr] = new addrObject(addr);
-				numUniqAddresses++;
+				allResolved = false;
+				for (var jj = 0; jj < curReq.addressesNew.length; jj++) {
+					addr = curReq.addressesNew[jj];
+					
+					if (geoCache[addr].resolved) {
+						curReq.addressesResolved.push(addr);
+						if (typeof curReq.cb1 === 'function') {
+							curReq.cb1(geoCache[addr]);
+						}
+					} else {
+						addrNotResolved.push(addr);
+					}
+				}
+				curReq.addressesNew = addrNotResolved;
+				if (curReq.addressesNew.length === 0) {
+					debug.log("checkRequests() resolveRequests done");
+					curReq.state = 'allResolved';
+					if (typeof curReq.cbAll === 'function') {
+						curReq.cbAll();
+					}
+				}
 			}
-			gGeocodeQueue();
+			return allResolved;
 		}
 
-		function allResolved() {
-			for (var addr in geoCache) {
-				if (!geoCache[addr].resolved) return false;
-			}
-			return true;
-		}
 
+		// googleGeocodeQueue()
+		//
+		// Note: Google allows 15k lookups per day per IP.  However, too many requests
+		// at the same time triggers a 620 code from google.  Therefore we want about 100ms
+		// delay between each request using googleGeocodeQueue.  Likewise, when we get a 620 code,
+		// we wait a bit and resubmit.
+		// http://code.google.com/apis/maps/faq.html#geocoder_limit
+		//
+		// NOTE: yahoo allows 5k lookups per day per IP
+		// http://developer.yahoo.com/maps/rest/V1/geocode.html
+		//
+		function googleGeocodeQueue () {
+			ems = new Date().getTime() - startTime;
+			bursts = maxBurstReq;
+			while (bursts-- && (ems > numReqs*desiredRate ) && (ao = getUnresolved())) {
+				ao.reqNum = ++numReqs;
+				ao.inProgress = true;
+				ao.sentLast = ems;
+				ao.sentTimes++;
+				debug.log("	googleGeocodeQueue() sending req "+numReqs+" at "+ems+"ms, addr: ", ao.addr1);
+				googleGeocode( ao.addr1, function (gObj) {
+				  	parseGObj(gObj);
+				});
+				ems = new Date().getTime() - startTime;
+			}
+			checkInProgress(ems);
+
+			if (checkRequests()) {
+				debug.log("googleGeocodeQueue() all queries complete, geocoder done");
+				//gOpts.geocodeCompleteCallback();
+			} else {
+				setTimeout(function() { googleGeocodeQueue() }, desiredRate);
+			}
+		}
 		function getUnresolved() {
 			for (var addr in geoCache) {
 				ao = geoCache[addr];
@@ -588,9 +746,9 @@
 				if (ao.inProgress && (ems - ao.sentLast > 2000)) {
 					if (ao.sentTimes > 3) {
 						ao.resolved = true;
-						numUniqAddrErrors++;
+						//numUniqAddrErrors++;
 						debug.log('checkInProgress() forgetting request '+ao.reqNum, ao);
-						gOpts.geocodedAddrCallback(ao);
+						//gOpts.geocodedAddrCallback(ao);
 					} else {
 						ao.inProgress = false;
 						debug.log('checkInProgress() resetting request '+ao.reqNum+' after '+(ems-ao.sentLast)+'ms', ao);
@@ -598,44 +756,6 @@
 				}
 			}
 			return false;
-		}
-
-		// gGeocodeQueue()
-		//
-		// Note: Google allows 15k lookups per day per IP.  However, too many requests
-		// at the same time triggers a 620 code from google.  Therefore we want about 100ms
-		// delay between each request using gGeocodeQueue.  Likewise, when we get a 620 code,
-		// we wait a bit and resubmit.
-		// http://code.google.com/apis/maps/faq.html#geocoder_limit
-		//
-		// NOTE: yahoo allows 5k lookups per day per IP
-		// http://developer.yahoo.com/maps/rest/V1/geocode.html
-		//
-		var desiredRate = 100; // long-term average should be one query every 'desiredRate' ms
-		var maxBurstReq = 4;   // if timeout gets delayed, say 500ms, we can send 'maxBurstReq' at a time till we catch up
-		var maxRetry = 4;
-		function gGeocodeQueue () {
-			ems = new Date().getTime() - startTime;
-			bursts = maxBurstReq;
-			while (bursts-- && (ems > numReqs*desiredRate ) && (ao = getUnresolved())) {
-				ao.reqNum = ++numReqs;
-				ao.inProgress = true;
-				ao.sentLast = ems;
-				ao.sentTimes++;
-				debug.log("	gGeocodeQueue() sending req "+numReqs+" at "+ems+"ms, addr: ", ao.addr1);
-				cnMF.gGeocode( ao.addr1, gOpts.googleApiKey, function (gObj) {
-				  	parseGObj(gObj);
-				});
-				ems = new Date().getTime() - startTime;
-			}
-			checkInProgress(ems);
-
-			if (allResolved()) {
-				debug.log("gGeocodeQueue() all queries complete, geocoder done");
-				gOpts.geocodeCompleteCallback();
-				return;
-			}
-			setTimeout(function() { gGeocodeQueue() }, desiredRate);
 		}
 
 		function parseGObj(gObj) {
@@ -661,8 +781,8 @@
 				geoCache[gObj.addr1].validCoords = false;
 				geoCache[gObj.addr1].inProgress = false;
 				geoCache[gObj.addr1].error = gObj.error;
-				numUniqAddrErrors++;
-				gOpts.geocodedAddrCallback(geoCache[gObj.addr1]);
+				//numUniqAddrErrors++;
+				//gOpts.geocodedAddrCallback(geoCache[gObj.addr1]);
 
 			} else if (gObj.lt) {
 				if (!gObj.addr1 || !geoCache[gObj.addr1]) {
@@ -677,103 +797,89 @@
 				geoCache[gObj.addr1].inProgress = false;
 				debug.log("parseGObj() got coords ", gObj.addr1, gObj, geoCache[gObj.addr1]);
 
-				numUniqAddrDecoded++;
-				gOpts.geocodedAddrCallback(geoCache[gObj.addr1]);
+				//numUniqAddrDecoded++;
+				//gOpts.geocodedAddrCallback(geoCache[gObj.addr1]);
 
 			} else {
 			  debug.warn("parseGObj() should not be here ", gObj);
 			}
 		}
 
-		geoMgrInit();
-
-		return {
-			numAddresses: numAddresses,
-			numUniqAddresses: numUniqAddresses,
-			count: function() {
-				var c = {
-					uniqAddrDecoded: 0,
-					uniqAddrErrors: 0,
-					uniqAddrTotal: 0
-				}
-				for (var addr in geoCache) {
-					ao = geoCache[addr];
-					c.uniqAddrTotal++;
-					if (ao.resolved && ao.validCoords) c.uniqAddrDecoded++;
-					if (ao.resolved && !ao.validCoords) c.uniqAddrErrors++;
-				}
-				return c;
-			}
-		}
-	}
-
-	//  description of gObj
-	// geocodeObj: {
-	// 	  lg: null, // number, -180 +180
-	// 	  lt: null, // number, -90 +90
-	// 	  addr2: null, // string, google's rewording of addr1
-	// 	  addr1: null, // string, address passed to geocoder
-	// 	  errorCode: null, // number
-	// 	  tmpError: false, // boolean
-	// 	  error: null // string error msg
-	// },
-	//
-
-	// gGeocode() translates addresses into array of lat/lng coords using Google, also see gGeocodeQueue()
-	//
-	cnMF.gGeocode = function( addr, googleApiKey, callback ) {
-
-		//debug.log("gGeocode() submitting addr to google: " + addr);
-		//$("#"+ cnMFUI.opts.listId ).append('.');
-
-		//  switched from getJson to ajax to handle errors.  However, looks like error function is not called
-		//  when google responds with http 400 and text/html (versus http 200 with text/javascript)
+		//  description of gObj
+		// geocodeObj: {
+		// 	  lg: null, // number, -180 +180
+		// 	  lt: null, // number, -90 +90
+		// 	  addr2: null, // string, google's rewording of addr1
+		// 	  addr1: null, // string, address passed to geocoder
+		// 	  errorCode: null, // number
+		// 	  tmpError: false, // boolean
+		// 	  error: null // string error msg
+		// },
 		//
-		// http://groups.google.com/group/google-maps-api/browse_thread/thread/e347b370e8586767/ddf95bdb0fc6a9f7?lnk=raot
-		geoUrl = 'http://maps.google.com/maps/geo?'
-				+ '&key='+ googleApiKey
-				+ '&q='+ encodeURI(addr)
-				+ '&sensor=false&output=json'
-				+ '&callback=?';
-		//geoUrl = 'http://maps.google.com/maps/geo?callback=?';
-		$.ajax({
-			type: "GET",
-			url: geoUrl,
-			dataType: "json",
-			//global: false,
-			error: function (XMLHttpRequest, textStatus, errorThrown) {
-				debug.log("gGeocode() error for "+ geoUrl);
-			},
-			// complete is only called after success, not on error, therefore useless
-			//complete: function (XMLHttpRequest, textStatus) {
-  			//	debug.log("gGeocode() complete ", textStatus, XMLHttpRequest);
-			//},
-			success: function(data, textStatus) {
-				//debug.log("gGeocode() success() status,data: ", textStatus, data);
-				//$("#"+ cnMFUI.opts.listId ).append('.');
-				if (data.Placemark) {
-				  callback( {
-					lg: data.Placemark[0].Point.coordinates[0],
-					lt: data.Placemark[0].Point.coordinates[1],
-					addr2: data.Placemark[0].address,
-					addr1: data.name
-				  });
-				} else {
-				  callback( {
-					// http://code.google.com/apis/maps/documentation/geocoding/index.html#StatusCodes
-					addr1: data.name,
-					data: data,
-					errorCode: data.Status.code,
-					tmpError: (data.Status.code == 620) || (data.Status.code == 500) || (data.Status.code == 610),
-					error: (data.Status.code) ?
-					  ((602==data.Status.code) ? "602: Unknown Address" :
-					  ((620==data.Status.code) ? "620: Too Many Lookups" : "Google code: "+data.Status.code)) :
-					  "Google geocode api changed"
-				  });
-				}
-			 }
-		}); //close $.ajax
+
+		// googleGeocode() translates addresses into array of lat/lng coords using Google, also see googleGeocodeQueue()
+		//
+		function googleGeocode( addr, callback ) {
+
+			//debug.log("gGeocode() submitting addr to google: " + addr);
+			//$("#"+ cnMFUI.opts.listId ).append('.');
+
+			//  switched from getJson to ajax to handle errors.  However, looks like error function is not called
+			//  when google responds with http 400 and text/html (versus http 200 with text/javascript)
+			//
+			// http://groups.google.com/group/google-maps-api/browse_thread/thread/e347b370e8586767/ddf95bdb0fc6a9f7?lnk=raot
+			geoUrl = 'http://maps.google.com/maps/geo?'
+					+ '&key='+ googleApiKey
+					+ '&q='+ encodeURI(addr)
+					+ '&sensor=false&output=json'
+					+ '&callback=?';
+			//geoUrl = 'http://maps.google.com/maps/geo?callback=?';
+			$.ajax({
+				type: "GET",
+				url: geoUrl,
+				dataType: "json",
+				//global: false,
+				error: function (XMLHttpRequest, textStatus, errorThrown) {
+					debug.log("gGeocode() error for "+ geoUrl);
+				},
+				// complete is only called after success, not on error, therefore useless
+				//complete: function (XMLHttpRequest, textStatus) {
+	  			//	debug.log("gGeocode() complete ", textStatus, XMLHttpRequest);
+				//},
+				success: function(data, textStatus) {
+					//debug.log("gGeocode() success() status,data: ", textStatus, data);
+					//$("#"+ cnMFUI.opts.listId ).append('.');
+					if (data.Placemark) {
+					  callback( {
+						lg: data.Placemark[0].Point.coordinates[0],
+						lt: data.Placemark[0].Point.coordinates[1],
+						addr2: data.Placemark[0].address,
+						addr1: data.name
+					  });
+					} else {
+					  callback( {
+						// http://code.google.com/apis/maps/documentation/geocoding/index.html#StatusCodes
+						addr1: data.name,
+						data: data,
+						errorCode: data.Status.code,
+						tmpError: (data.Status.code == 620) || (data.Status.code == 500) || (data.Status.code == 610),
+						error: (data.Status.code) ?
+						  ((602==data.Status.code) ? "602: Unknown Address" :
+						  ((620==data.Status.code) ? "620: Too Many Lookups" : "Google code: "+data.Status.code)) :
+						  "Google geocode api changed"
+					  });
+					}
+				 }
+			}); //close $.ajax
+		}
+
+		GeocodeManager.init();
+
+		return GeocodeManager;
+
 	}
+	
+
 	// END GEOCODE
 
 
