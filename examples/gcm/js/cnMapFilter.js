@@ -5,7 +5,7 @@
 // only showing items that have coordinates/address on map's currently displayed canvas.
 //
 //
-// Copyright (c) 2011 Chad Norwood
+// Copyright (c) 2009-2012 Chad Norwood
 // Dual licensed under the MIT and GPL licenses:
 //   http://www.opensource.org/licenses/mit-license.php
 //   http://www.gnu.org/licenses/gpl.html

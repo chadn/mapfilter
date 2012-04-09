@@ -13,7 +13,7 @@
  * for experimenting with coding methods.  I apologize.
  * It will be cleaned up in stages.
  *
- * Copyright (c) 2011 Chad Norwood
+ * Copyright (c) 2009-2012 Chad Norwood
  * Dual licensed under the MIT and GPL licenses:
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
@@ -247,6 +247,7 @@
 		});
 		mapLogo(myGmap);
 		mapJumpBox(myGmap);
+		mapRightTab(cnMFUI.opts.mapId);
 		iconDefault = new GIcon(G_DEFAULT_ICON, urlIconDefault);
 		return myGmap;
 	  }
@@ -720,8 +721,30 @@
 		oMap.getContainer().appendChild(info);
 	  }
 
-
-	  function mapLogo(oMap) {
+	
+	function mapRightTab(mapId) {
+		$('#'+mapId).append("<div id='rightTab'>-</div>");
+		$('#rightTab').click(function(){
+			console.log("mapRightTab() rtSide').width: ",$('#rtSide').width());
+			if ($('#rtSide').width() < 1) {
+				$('#rightTab').html('-');
+				$('#MapID').css('width','67%');
+				$('#rtSide').animate({
+					width : '32%'
+				}, 400	, 'linear');
+			} else {
+				$('#rightTab').html('+');
+				$('#rtSide').animate({
+					width : 0
+				}, 400, 'linear', function(){
+					$('#MapID').css('width','100%');
+				});
+				
+			}
+		});
+	}
+	
+	function mapLogo(oMap) {
 		/* Insert Logo on Map */
 		var info=document.createElement('div');
 		info.id='LogoInfo';
