@@ -108,7 +108,7 @@
 				return results[1];
 		}
 
-		function validateDate(httpParamName, def) {
+		function validateDate_DELME(httpParamName, def) {
 				var offset = httpGetParam(httpParamName); 
 				offset = parseInt(offset);
 				if (isNaN(offset)) {
@@ -173,12 +173,6 @@
 		var lt = validateFloat('lat',-180,180, 41.885405); 
 
 
-		// find events initially in this range
-		var sday = validateDate('sd',0);  // start today (0 days from now)
-		var eday = validateDate('ed',42); // end in 6 weeks
-
-		console.log ("sday="  + sday  + " eday="  + eday);
-
 		var map_size=validateSize('size',200,2000,200,2000, [800,600]);
 		//var xmlurl = validateURL('u'); 
 		var xmlurl = httpGetParam('u');
@@ -220,8 +214,8 @@
 			gCalGroups: myURL.params.gcg,
 			gCalImports: myURL.params.gci,
 			gCalEmails: myURL.params.gc,
-			startDay: sday,
-			endDay: eday,
+			startDay: httpGetParam('sd') || 0,
+			endDay: httpGetParam('ed') || 42,
 			googleApiKey: "ABQIAAAAQ8l06ldZX6JSGI8gETtVhhTrRIj9DJoJiLGtM4J1SrTlGmVDcxQDT5BVw88R8j75IQxYlwFcEw6w9w",
 
 			mapChangeCallback: function (curData) {
