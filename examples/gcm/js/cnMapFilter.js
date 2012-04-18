@@ -65,7 +65,7 @@
 		return '<a href="' + this.getDirectionsUrlStr() + '" title="Get Directions using maps.google.com">Directions</a>';
 	};
 	EventClass.prototype.insideCurMap = function(mapbox){
-		return this.validCoords ? mapbox.containsLatLng(new GLatLng(this.lt, this.lg, true)) : false;
+		return this.validCoords ? mapbox.containsLatLng(new GLatLng(this.lt, this.lg, true)) : false; // TODO2
 	};
 	// Returns true if current event occurs before start or after end.
 	EventClass.prototype.isFilteredbyDate = function(startDayOffset,endDayOffset){
@@ -125,7 +125,7 @@
 		}
 		// No markers existing at this location, so create one.
 		//debug.log("addMarker() creating marker, eventObj.id=%s, %o", eventObj.id, eventObj.getCoordsStr());
-		var myGLatLng = new GLatLng(eventObj.lt, eventObj.lg);
+		var myGLatLng = new GLatLng(eventObj.lt, eventObj.lg); 
 		// http://code.google.com/apis/maps/documentation/javascript/v2/reference.html#GMarker
 		var gMrkr = new GMarker( myGLatLng, {
 				icon:iconDefault
@@ -281,7 +281,7 @@
 
 			if (box === null) {
 				var corner = new GLatLng(kk.lt, kk.lg, true);
-				box = new GLatLngBounds(corner, corner);
+				box = new GLatLngBounds(corner, corner);  // TODO2
 			} else {
 				box.extend(new GLatLng(kk.lt, kk.lg, true));
 			}
@@ -352,9 +352,9 @@
 			var kk = cnMF.eventList[i];
 
 			insideCurMap = kk.insideCurMap(mapbox);
-			debug.log( "marker "+ (insideCurMap ? 'in':'out') +"side map %o", kk);
+			//debug.log( "marker "+ (insideCurMap ? 'in':'out') +"side map %o", kk);
 			if (!insideCurMap) {
-				debug.log( " filteredByMap = true for ",kk);
+				//debug.log( " filteredByMap = true for ",kk);
 				cnMF.filteredByMap = true;
 			}
 
@@ -542,14 +542,6 @@
 	///
 	cnMF.geocodeManager = function( gOpts ) {
 
-
-	//  goal:
-	// public function
-	// GeocodeManager.stats() -  returns stats object - (num unique addresses, num resolved, etc)
-
-	// private functions
-
-
 		// count addreses and unique addreses.
 		// don't want duplicates - wasting calls to google
 		
@@ -568,9 +560,10 @@
 		    startTime = new Date().getTime(),
 
 		    // Google specific geocoding variables
-		    desiredRate = 100, // long-term average should be one query every 'desiredRate' ms
+		    desiredRate = 150, // long-term average should be one query every 'desiredRate' ms
+		    reqTimeout = 2000,    // reset after this
 		    maxBurstReq = 4,   // if timeout gets delayed, say 500ms, we can send 'maxBurstReq' at a time till we catch up
-		    maxRetry = 4;
+		    maxRetries = 2;  // how many times an attempt to geocode service is made per address
 
 		GeocodeManager.init = function() {
 			googleApiKey = gOpts.googleApiKey;
@@ -619,9 +612,9 @@
 				numAddresses++;
 				if (!isNaN(ii)) {
 					uniqAddresses[addresses[ii]] = 1; // array
-					console.log("CHAD TODO2 xx1", ii);
+					//console.log("CHAD TODO2 xx1", ii);
 				} else {
-					console.log("CHAD TODO2 xx2", ii);
+					//console.log("CHAD TODO2 xx2", ii);
 					uniqAddresses[ii] = 1; // object or string
 				}
 			}
@@ -700,11 +693,11 @@
 
 		// googleGeocodeQueue()
 		//
-		// Note: Google allows 15k lookups per day per IP.  However, too many requests
-		// at the same time triggers a 620 code from google.  Therefore we want about 100ms
+		// Note: Google allows 2.5k lookups per day per browser.  However, too many requests
+		// at the same time triggers a OVER_QUERY_LIMIT code from google.  Therefore we want about 100ms
 		// delay between each request using googleGeocodeQueue.  Likewise, when we get a 620 code,
 		// we wait a bit and resubmit.
-		// http://code.google.com/apis/maps/faq.html#geocoder_limit
+		// https://developers.google.com/maps/documentation/geocoding/#Limits
 		//
 		// NOTE: yahoo allows 5k lookups per day per IP
 		// http://developer.yahoo.com/maps/rest/V1/geocode.html
@@ -743,15 +736,15 @@
 		function checkInProgress(ems) {
 			for (var addr in geoCache) {
 				ao = geoCache[addr];
-				if (ao.inProgress && (ems - ao.sentLast > 2000)) {
-					if (ao.sentTimes > 3) {
+				if (ao.inProgress && (ems - ao.sentLast > reqTimeout)) {
+					if (ao.sentTimes > maxRetries) {
 						ao.resolved = true;
 						//numUniqAddrErrors++;
 						debug.log('checkInProgress() forgetting request '+ao.reqNum, ao);
 						//gOpts.geocodedAddrCallback(ao);
 					} else {
 						ao.inProgress = false;
-						debug.log('checkInProgress() resetting request '+ao.reqNum+' after '+(ems-ao.sentLast)+'ms', ao);
+						debug.log('checkInProgress() resetting request '+ao.reqNum+' after '+(ems-ao.sentLast)+'ms (reqTimeout)', ao);
 					}
 				}
 			}
@@ -760,15 +753,14 @@
 
 		function parseGObj(gObj) {
 			if (typeof(gObj) != 'object') {
-				debug.warn("parseGObj() shouldn't be here " + typeof(gObj), gObj);
+				debug.warn("parseGObj() shouldn't be here " + typeof gObj, gObj);
 				return;
 			}
 			if (gObj.tmpError) {
-				if (gObj.errorCode == 620) {
+				// https://developers.google.com/maps/documentation/geocoding/#Limits
+				if (gObj.errorCode == google.maps.GeocoderStatus.OVER_QUERY_LIMIT) {
 					debug.log("parseGObj() resubmit (too fast)", gObj.addr1, gObj);
 					desiredRate = 1.1 * desiredRate; // slow down requests
-				} else {
-					debug.log("parseGObj() resubmit (timeout) ", gObj.addr1, gObj);
 				}
 				if (gObj.addr1) {
 					geoCache[gObj.addr1].inProgress = false;
@@ -776,7 +768,7 @@
 				}
 
 			} else if (gObj.error) {
-				debug.info("parseGObj() error ", gObj);
+				debug.info("parseGObj() geocode error " + gObj.error, gObj);
 				geoCache[gObj.addr1].resolved = true;
 				geoCache[gObj.addr1].validCoords = false;
 				geoCache[gObj.addr1].inProgress = false;
@@ -824,54 +816,41 @@
 			//debug.log("gGeocode() submitting addr to google: " + addr);
 			//$("#"+ cnMFUI.opts.listId ).append('.');
 
-			//  switched from getJson to ajax to handle errors.  However, looks like error function is not called
-			//  when google responds with http 400 and text/html (versus http 200 with text/javascript)
-			//
-			// http://groups.google.com/group/google-maps-api/browse_thread/thread/e347b370e8586767/ddf95bdb0fc6a9f7?lnk=raot
-			geoUrl = 'http://maps.google.com/maps/geo?'
-					+ '&key='+ googleApiKey
-					+ '&q='+ encodeURI(addr)
-					+ '&sensor=false&output=json'
-					+ '&callback=?';
-			//geoUrl = 'http://maps.google.com/maps/geo?callback=?';
-			$.ajax({
-				type: "GET",
-				url: geoUrl,
-				dataType: "json",
-				//global: false,
-				error: function (XMLHttpRequest, textStatus, errorThrown) {
-					debug.log("gGeocode() error for "+ geoUrl);
-				},
-				// complete is only called after success, not on error, therefore useless
-				//complete: function (XMLHttpRequest, textStatus) {
-	  			//	debug.log("gGeocode() complete ", textStatus, XMLHttpRequest);
-				//},
-				success: function(data, textStatus) {
-					//debug.log("gGeocode() success() status,data: ", textStatus, data);
-					//$("#"+ cnMFUI.opts.listId ).append('.');
-					if (data.Placemark) {
-					  callback( {
-						lg: data.Placemark[0].Point.coordinates[0],
-						lt: data.Placemark[0].Point.coordinates[1],
-						addr2: data.Placemark[0].address,
-						addr1: data.name
-					  });
-					} else {
-					  callback( {
-						// http://code.google.com/apis/maps/documentation/geocoding/index.html#StatusCodes
-						addr1: data.name,
-						data: data,
-						errorCode: data.Status.code,
-						tmpError: (data.Status.code == 620) || (data.Status.code == 500) || (data.Status.code == 610),
-						error: (data.Status.code) ?
-						  ((602==data.Status.code) ? "602: Unknown Address" :
-						  ((620==data.Status.code) ? "620: Too Many Lookups" : "Google code: "+data.Status.code)) :
-						  "Google geocode api changed"
-					  });
-					}
-				 }
-			}); //close $.ajax
-		}
+			var geocoder = new google.maps.Geocoder();
+			geocoder.geocode( { 
+				'address': addr
+			}, function(results, status) {
+				var s2e = {};
+				// https://developers.google.com/maps/documentation/javascript/reference#GeocoderStatus
+				s2e[google.maps.GeocoderStatus.OK] = false;
+				s2e[google.maps.GeocoderStatus.ERROR] = 'ERROR';
+				s2e[google.maps.GeocoderStatus.INVALID_REQUEST] ='INVALID_REQUEST';
+				s2e[google.maps.GeocoderStatus.OVER_QUERY_LIMIT] = 'OVER_QUERY_LIMIT';
+				s2e[google.maps.GeocoderStatus.REQUEST_DENIED] = 'REQUEST_DENIED';
+				s2e[google.maps.GeocoderStatus.UNKNOWN_ERROR] = 'UNKNOWN_ERROR';
+				s2e[google.maps.GeocoderStatus.ZERO_RESULTS] = 'ZERO_RESULTS';
+
+				if (status == google.maps.GeocoderStatus.OK) {
+					//console.log("geocoder WORKS", results, results[0].geometry.location.lng(), results[0].geometry.location.lat());
+					callback( {
+						lg: results[0].geometry.location.lng(),
+						lt: results[0].geometry.location.lat(),
+						loc: results[0].geometry.location,
+						addr2: results[0].formatted_address,
+						addr1: addr
+					});
+				} else {
+					//console.log("geocoder NO WORKS, status: ", status);
+					callback( {
+						addr1: addr,
+						data: results,
+						errorCode: status,
+						tmpError: (status == google.maps.GeocoderStatus.OVER_QUERY_LIMIT),
+						error: (s2e[status]) ? s2e[status] : "Google geocode api changed"
+					});
+				}
+			});
+		};
 
 		GeocodeManager.init();
 

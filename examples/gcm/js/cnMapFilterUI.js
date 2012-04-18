@@ -22,7 +22,7 @@
 
 ;(function($) {
 
-	var startMs2 = new Date().getTime();
+	var startMs2 = (new Date()).getTime();
 
 	// google variables
 	var myGmap;
@@ -52,6 +52,7 @@
 	var mapClickListener = false,
 		mapDragstartListener = false,
 		lastUpdate4MapLoad = false,
+		redrawing = false,
 		moreThanOneCal = false,
 		emptyTableHtml = "<td>nope</td><td>no match</td><td>uh-uh</td><td>nowhere</td>";
 
@@ -510,7 +511,11 @@
 		updateResultsTable('ResultsMapEvents', true, false);
 		updateResultsTable('ResultsMapUnknownTable', false, false);
 
-		$('.scrollPane').jScrollPane(jScrollPaneInitOpitons);
+		try {
+			$('.scrollPane').jScrollPane(jScrollPaneInitOpitons);
+		} catch (e) {
+			debug.log('jScrollPane error:', e.message);
+		}
 	  }
 
 	  /*
@@ -645,11 +650,11 @@
 	  function mapRedraw(skipUpdateStatus) {
 
 		if ((typeof redrawing == 'boolean') && redrawing) {
-			debug.log(ems+"mapRedraw() redrawing already in process, skipping.");
+			debug.log(ems+" mapRedraw() redrawing already in process, skipping.");
 			return;
 		}
 		redrawing=true;
-		if(0) debug.time('total mapRedraw');
+		// debug.time('total mapRedraw');
 
 		if (cnMF.updateMarkers()) {
 		  debug.log("mapRedraw() updated markers, changes found");
@@ -659,7 +664,7 @@
 		  debug.log("mapRedraw() updated markers - no changes, no updateResults()");
 		  updateFilters();
 		}
-		if(0) debug.timeEnd('total mapRedraw');
+		// debug.timeEnd('total mapRedraw');
 
 
 		// todo: don't update status every map redraw. then we can call mapRedraw during geocoding, but
