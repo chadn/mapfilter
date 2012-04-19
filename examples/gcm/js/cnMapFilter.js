@@ -560,7 +560,7 @@
 		    startTime = new Date().getTime(),
 
 		    // Google specific geocoding variables
-		    desiredRate = 150, // long-term average should be one query every 'desiredRate' ms
+		    desiredRate = 100, // long-term average should be one query every 'desiredRate' ms
 		    reqTimeout = 2000,    // reset after this
 		    maxBurstReq = 4,   // if timeout gets delayed, say 500ms, we can send 'maxBurstReq' at a time till we catch up
 		    maxRetries = 2;  // how many times an attempt to geocode service is made per address

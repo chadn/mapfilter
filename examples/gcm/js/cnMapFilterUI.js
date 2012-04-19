@@ -54,6 +54,7 @@
 		lastUpdate4MapLoad = false,
 		redrawing = false,
 		moreThanOneCal = false,
+		calendarsDecoding,
 		emptyTableHtml = "<td>nope</td><td>no match</td><td>uh-uh</td><td>nowhere</td>";
 
 	/*
@@ -105,6 +106,7 @@
 			updateStatus('Map Loaded, Loading '+ calendarURLs.length +' Calendar(s) ..');
 			//$('#calendarDiv').html('');
 			initResults();
+			calendarsDecoding = calendarURLs.length;
 			for (var ii = 0; ii < calendarURLs.length; ii++) {
 				var gCalURL = calendarURLs[ii];
 				// TODO: create a cnMF.showDates(start,end) which gets from google calendar if required
@@ -113,11 +115,13 @@
 				} else if (gCalURL == 'test2') {
 					getXmlData();
 				} else {
-					_gaq.push(['_trackEvent', 'Loading', 'calender-u', gCalURL]);
+					_gaq.push(['_trackEvent', 'Loading', 'cal-begin', gCalURL]);
 					cnMF.getGCalData(gCalURL, cnMF.origStartDay, cnMF.origEndDay, {
 							onCalendarLoad: cbCalendarLoad,
 							onGeoDecodeAddr: cbGeoDecodeAddr,
-							onGeoDecodeComplete: cbGeoDecodeComplete
+							onGeoDecodeComplete: function() {
+								cbGeoDecodeComplete(gCalURL, calendarURLs.length)
+							}
 						});
 				}
 				
@@ -137,7 +141,7 @@
 		}
 
 		debug.log("mapFilter().init() Completed.");
-	  }
+	}
 
 	function getCalendarURLs() {
 		var calendarURLs = [];
@@ -571,11 +575,10 @@
 				positionFixed: false, // TODO: set to true, move pager to top of table
 				container: $("#"+divId+"Pager")
 			})
-		*/
 		  .bind("sortEnd",function() {
 			debug.log('tablesorter finished sorting', this);
-			})
-		  ;
+			});
+		*/
 
 	  }
 
@@ -1044,7 +1047,7 @@
 		}
 	}
 	// cbGeoDecodeComplete() called once all addresses are decoded for a given calendar
-	function cbGeoDecodeComplete() {
+	function cbGeoDecodeComplete(gCalURL, calendarCount) {
 		debug.log("cbGeoDecodeComplete() begins");
 		//if (cnMFUI.opts.mapCenterLt == cnMFUI.defaults.mapCenterLt)
 
@@ -1052,15 +1055,29 @@
 		cnMF.reportData.submitTime = cnMF.reportData.submitTime.replace(/(\d{3})$/,".$1"); // add period so its secs.msec
 		debug.info("cbGeoDecodeComplete() post cnMF.reportData:", cnMF.reportData);
 
-		_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrDecoded', cnMF.reportData.uniqAddrDecoded]);
-		_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrTotal', cnMF.reportData.uniqAddrTotal]);
-		_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrErrors', cnMF.reportData.uniqAddrErrors]);
-		_gaq.push(['_trackEvent', 'Loading', 'calenders', 'totalGeoDecodes', 1]);
-		_gaq.push(['_trackEvent', 'Loading', 'calenders', 'totalGeoDecodeMsecs', parseInt(cnMF.reportData.submitTime.replace(/\./,'')) - parseInt(cnMF.reportData.loadTime.replace(/\./,''))]);
-		// only script tag can bypass same-origin-policy, so use jsonp hack by adding callback=?
-		// note that URL limit is 1024 (?) chars, so can't send too much data
-		//$.post("http://chadnorwood.com/saveJson/", {sj: cnMF.reportData});
-		$.getJSON("http://chadnorwood.com/saveJson/?callback=?", {sj: cnMF.reportData});
+		var decodeMs = parseInt(cnMF.reportData.submitTime.replace(/\./,'')) - parseInt(cnMF.reportData.loadTime.replace(/\./,'') );
+
+		_gaq.push(['_trackEvent', 'Loading', 'cal-complete', gCalURL]);
+		_gaq.push(['_trackEvent', 'Loading', 'cal-loadTime', gCalURL, decodeMs]);  // we can find avg decode time per calendar
+		debug.info("cbGeoDecodeComplete() calendars decode time:", gCalURL, decodeMs );
+
+		calendarsDecoding -= 1;
+		if (calendarsDecoding === 0) {
+			// All calendars have been geoDecoded
+			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrDecoded', cnMF.reportData.uniqAddrDecoded]);
+			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrTotal', cnMF.reportData.uniqAddrTotal]);
+			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrErrors', cnMF.reportData.uniqAddrErrors]);
+			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'totalGeoDecodes', 1]);
+			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'totalGeoDecodeMsecs', decodeMs]); // so we can find avg decode time
+			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'calendarCount', calendarCount]);  // we can find avg decode time per calendar
+			_gaq.push(['_trackEvent', 'Loading', 'calenders', calendarCount + 'calendars']);  // we can find avg decode time per calendar
+			debug.info("cbGeoDecodeComplete() All calendars decoded.", decodeMs, cnMF.reportData );
+		} else {
+			debug.info("cbGeoDecodeComplete() still decoding "+ calendarsDecoding + " more calendar.");
+			
+		}
+
+		// TODO: remove cnMF.reportData ?
 		
 		updateLoadingMap();
 	}
