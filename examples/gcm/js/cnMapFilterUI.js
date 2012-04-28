@@ -102,8 +102,8 @@
 		// check for data sources and add them
 		//
 		if (calendarURLs.length) {
-			$('#calendarTitleContent').html("<h3><a href=''>Loading Calendar.. </a></h3>");
-			updateStatus('Map Loaded, Loading '+ calendarURLs.length +' Calendar(s) ..');
+			$('#calendarTitleContent').html("<h3><a href=''>Fetching Calendar.. </a></h3>");
+			updateStatus('Map Loaded, Fetching '+ calendarURLs.length +' Calendar(s) ..');
 			//$('#calendarDiv').html('');
 			initResults();
 			calendarsDecoding = calendarURLs.length;
@@ -121,6 +121,9 @@
 							onGeoDecodeAddr: cbGeoDecodeAddr,
 							onGeoDecodeComplete: function() {
 								cbGeoDecodeComplete(gCalURL, calendarURLs.length)
+							},
+							onError: function(jqXHR, textStatus) {
+								_gaq.push(['_trackEvent', 'Loading', 'cal-error', textStatus + ": "+ gCalURL]);
 							}
 						});
 				}
@@ -136,7 +139,11 @@
 			$('.helpContainer').addClass('scrollPane');
 
 			$('#resultsDiv').addClass("winXP"); // to make jScrollpane have a winxp scrollbar - see mapFilter.css
-			$('.scrollPane').jScrollPane(jScrollPaneInitOpitons); // add scroll pane
+			try {
+				$('.scrollPane').jScrollPane(jScrollPaneInitOpitons); // add scroll pane
+			} catch (e) {
+				debug.log('jScrollPane error:', e.message);
+			}
 			$('#calendarTitleContent').html( addCalForm() );
 		}
 
@@ -144,29 +151,37 @@
 	}
 
 	function getCalendarURLs() {
-		var calendarURLs = [];
+		var calendarURLs = [],
+		    tmp;
 		
 		if (cnMFUI.opts.gCalURLs) {
 			if (Object.prototype.toString.call(cnMFUI.opts.gCalURLs) != '[object Array]') {
-				console.error("gCalURLs must be an array, not "+ typeof cnMFUI.opts.gCalURLs, cnMFUI.opts.gCalURLs);
+				debug.error("gCalURLs must be an array, not "+ typeof cnMFUI.opts.gCalURLs, cnMFUI.opts.gCalURLs);
 				return [];
 			}
 			for (var ii = 0; ii < cnMFUI.opts.gCalURLs.length; ii++) {
-				calendarURLs.push(cnMFUI.opts.gCalURLs[ii]);
+				tmp =  cnMFUI.opts.gCalURLs[ii];
+				if (tmp.match(/\%/)) {
+					tmp = unescape(tmp);
+				}
+				calendarURLs.push(tmp);
 			}
 		}
 		if (cnMFUI.opts.gCalGroups) { // gcg=xxx,yyy
 			$.each(cnMFUI.opts.gCalGroups.split(','), function(index, value) { 
-				calendarURLs.push("https://www.google.com/calendar/feeds/"+ value + "%40group.calendar.google.com/public/basic");
+				calendarURLs.push("https://www.google.com/calendar/feeds/"+ value + "@group.calendar.google.com/public/basic");
 			});
 		}
 		if (cnMFUI.opts.gCalImports) { // gci=xxx,yyy
 			$.each(cnMFUI.opts.gCalImports.split(','), function(index, value) { 
-				calendarURLs.push("https://www.google.com/calendar/feeds/"+ value + "%40import.calendar.google.com/public/basic");
+				calendarURLs.push("https://www.google.com/calendar/feeds/"+ value + "@import.calendar.google.com/public/basic");
 			});
 		}
 		if (cnMFUI.opts.gCalEmails) { // gc=xxx@groups.calendar.google.com,yyy@my.domain.com
-			$.each(cnMFUI.opts.gCalEmails.split(','), function(index, value) { 
+			$.each(cnMFUI.opts.gCalEmails.split(','), function(index, value) {
+				if (!value.match(/@/)) {
+					value = value.replace(/%40/,'@');
+				}
 				calendarURLs.push("https://www.google.com/calendar/feeds/"+ value + "/public/basic");
 			});
 		}
@@ -466,6 +481,7 @@
 		  	initSlider('resultsDataFilters'); // resize then redraw sliders
 
 			// clear table and remove scroll pane in order to resize it properly
+			
 			$('.scrollPane').jScrollPaneRemove();
 			updateResultsTable('ResultsMapEvents', true, true); // clear table
 			updateEventsContainerSize('#ResultsMapEventsTable'); // resize table
@@ -733,7 +749,7 @@
 	function mapRightTab(mapId) {
 		$('#'+mapId).append("<div id='rightTab'>-</div>");
 		$('#rightTab').click(function(){
-			console.log("mapRightTab() rtSide').width: ",$('#rtSide').width());
+			debug.log("mapRightTab() rtSide').width: ",$('#rtSide').width());
 			if ($('#rtSide').width() < 1) {
 				$('#rightTab').html('-');
 				$('#MapID').css('width','67%');

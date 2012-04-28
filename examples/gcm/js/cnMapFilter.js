@@ -250,7 +250,7 @@
 	}
 
 	cnMF.addCal = function(gCalUrl, calData){ 
-		console.log("cnMF.addCal", gCalUrl, calData);
+		// console.log("cnMF.addCal", gCalUrl, calData);
 		
 		if (!cnMF.calData) {
 			cnMF.calData = {};
@@ -443,8 +443,22 @@
 			gCalObj.ctz = cnMF.tz.name; // ex: 'America/Chicago'
 			debug.info("Displaying calendar times using this timezone: "+ gCalObj.ctz);
 		}
-		$.getJSON(gCalUrl + "?alt=json-in-script&callback=?", gCalObj, function(cdata) {
-			parseGCalData(gCalUrl, cdata, startDate, endDate, callbacks);
+		$.ajax({
+			url: gCalUrl + "?alt=json-in-script&callback=?",
+			dataType: 'json',
+			data: gCalObj,
+			timeout: 12000, // 12 secs
+			success: function(cdata) {
+				parseGCalData(gCalUrl, cdata, startDate, endDate, callbacks);
+			}, 
+			complete: function (jqXHR, textStatus) {
+				if (textStatus !== 'success') {
+					debug.warn("getGCalData problem: ", textStatus, gCalUrl, jqXHR);
+					if ('function' === typeof callbacks.onError) {
+						callbacks.onError(jqXHR, textStatus);
+					}
+				}
+			}
 		});
 	}
 
