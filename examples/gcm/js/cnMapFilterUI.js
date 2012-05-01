@@ -120,7 +120,7 @@
 							onCalendarLoad: cbCalendarLoad,
 							onGeoDecodeAddr: cbGeoDecodeAddr,
 							onGeoDecodeComplete: function() {
-								cbGeoDecodeComplete(gCalURL, calendarURLs.length)
+								cbGeoDecodeComplete(gCalURL, calendarURLs)
 							},
 							onError: function(jqXHR, textStatus) {
 								_gaq.push(['_trackEvent', 'Loading', 'cal-error', textStatus + ": "+ gCalURL]);
@@ -1063,7 +1063,7 @@
 		}
 	}
 	// cbGeoDecodeComplete() called once all addresses are decoded for a given calendar
-	function cbGeoDecodeComplete(gCalURL, calendarCount) {
+	function cbGeoDecodeComplete(gCalURL, calendarURLs) {
 		debug.log("cbGeoDecodeComplete() begins");
 		//if (cnMFUI.opts.mapCenterLt == cnMFUI.defaults.mapCenterLt)
 
@@ -1080,13 +1080,18 @@
 		calendarsDecoding -= 1;
 		if (calendarsDecoding === 0) {
 			// All calendars have been geoDecoded
+			// Event Category: Loading  - Event Action: calendars - Event Label: uniqAddrDecoded
 			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrDecoded', cnMF.reportData.uniqAddrDecoded]);
 			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrTotal', cnMF.reportData.uniqAddrTotal]);
 			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrErrors', cnMF.reportData.uniqAddrErrors]);
 			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'totalGeoDecodes', 1]);
 			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'totalGeoDecodeMsecs', decodeMs]); // so we can find avg decode time
-			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'calendarCount', calendarCount]);  // we can find avg decode time per calendar
-			_gaq.push(['_trackEvent', 'Loading', 'calenders', calendarCount + 'calendars']);  // we can find avg decode time per calendar
+			_gaq.push(['_trackEvent', 'Loading', 'calenders', 'calendarCount', calendarURLs.length]);  // we can find avg decode time per calendar
+			for (var ii in calendarURLs) {
+				_gaq.push(['_trackEvent', 'Loading', 'cal-decoded' + calendarURLs.length, calendarURLs[ii], cnMF.reportData.uniqAddrDecoded] );
+				_gaq.push(['_trackEvent', 'Loading', 'cal-total' + calendarURLs.length, calendarURLs[ii], cnMF.reportData.uniqAddrTotal] );
+				_gaq.push(['_trackEvent', 'Loading', 'cal-errors' + calendarURLs.length, calendarURLs[ii], cnMF.reportData.uniqAddrErrors] );
+			}
 			debug.info("cbGeoDecodeComplete() All calendars decoded.", decodeMs, cnMF.reportData );
 		} else {
 			debug.info("cbGeoDecodeComplete() still decoding "+ calendarsDecoding + " more calendar.");

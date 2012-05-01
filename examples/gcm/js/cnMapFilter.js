@@ -485,7 +485,7 @@
 			var curEntry = cdata.feed.entry[ii];
 			if (!(curEntry['gd$when'] && curEntry['gd$when'][0]['startTime'])) {
 				debug.info("skipping cal curEntry (no gd$when) %s (%o)", curEntry['title']['$t'], curEntry);
-				return true; // continue to next one
+				continue;
 			};
 			var url = {};
 			for (var jj=0; curEntry.link[jj]; jj++) {
