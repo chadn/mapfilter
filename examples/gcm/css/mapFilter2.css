@@ -1,0 +1,278 @@
+/*
+ * copy-paste prototype for mapFilter 
+ * 2010-4-8 chad norwood
+ * 2010-6-1 chad norwood
+ * 2010-9-2 chad norwood
+ */
+
+
+/* REMOVE? *?
+      /* Generic map, side bar holder styles */
+/*
+      .MapBuilder {font: normal small verdana, arial, helvetica, sans-serif; font-size: 10pt; margin: 0px;}
+      .MapBuilder a {text-decoration: none; color: #0066CC; background-color: transparent;}
+      .MapBuilder a:hover {color: #F60; background-color: transparent;}
+      .MapBuilder h1 {font-weight: bold; font-size: 16pt; color: #369; border-bottom: 2px solid #369;}
+
+
+body          {text-align:left;}
+.main         {height: 100%; width:980px !important; width:982px;}
+.columns      {width:145px; float:left; padding:0px; position:relative; z-index:100; overflow:auto;}
+.float        {float:left; display:inline;}
+.topBottomBdr {border-width:1px 0px 1px 0px;}
+.leftRightBdr {border-width:0px 1px 0px 1px;}
+.content      {margin:0px;}
+.grey1  {background-color:#DCC;}
+.incols {margin-right:-164px; float:right;}
+
+#wrap   {margin-left:auto; margin-right:auto; text-align:left;}
+#float  {background-color:#CCC;}
+#center {margin-left:-1px; margin-right:195px; width:780px !important; width:780px; background-color:#FFF; position:relative;}
+#rightC {margin-right:-174px; float:right;}
+#mapId2  {height:600px;}
+#footer {width:100%; height:20px; background-color:#FFF;}
+
+.classlist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.classlist li {
+  background: #ecfad7;
+  padding: 10px 20px 10px;
+  border-top: solid 1px #c4df9b;
+  cursor: pointer;
+}
+.classlist li:hover {
+  background: #f6ffe9;
+}
+
+
+.containerWrap {position:absolute; width: 99%; height: 98%; background: #99B3CC; }
+
+*/
+/*
+ * END REMOVE
+ */
+
+
+
+
+  #tab-header { margin: 5px; font-size:200%; }
+  #MapStats { font-size:70%; }
+  #tab-container { margin: 1px; }
+  #resizable3 { padding:5px; font-size:62%; position:absolute }
+  #resizable4 { overflow:auto; }
+  #footer { padding:5px; z-index:100;}
+  #containerDELME h3 { text-align: center; margin: 0; margin-bottom: 10px; }
+  #filtersTab { text-align: left; }
+  /*a:hover { background: #E6E6E6; color: #555555; }*/
+  .highlight2 { font: bold;background: #E6E6E6; color: #555555; }
+  .highlight2 { font: bold;background: yellow; color: black; }
+
+p {clear:both;}
+
+#addTab { text-align:left;}
+#addForms { margin:0; padding: 0; clear: both; border:0;}
+#addForm { margin:2; padding: 1; border:0;}
+#addForm label {
+float:left;
+padding:0 8px 0 0;
+text-align:left;
+width:6em;
+}
+#addForm label.error { float: none; color: red; padding-left: .5em; vertical-align: top; }
+#addForm span {
+float:left;
+align:left;
+padding:0 0 0 8px;
+text-align:left;
+}
+
+
+.helpClass {
+	float:left; text-align:left; padding:10px;
+}
+div.scrollContainer {
+  overflow:hidden;
+}
+div.scrollContent {
+  position:relative;
+  top:0;
+}
+.scrollPane {
+  height: auto;
+  overflow: visible;
+  background: #EEEEEE;
+  float: left;
+  text-align:left;
+  position:absolute;
+}
+
+.jScrollPaneContainer {
+	border: 5px solid #9999CC;
+}
+
+
+
+
+
+
+
+
+.ui-slider .ui-slider-handle {
+	width: 34px;
+	height: 25px;
+	padding: 2px;
+	top: -10px;
+	margin-left: 0;  /* reset horizontal handle offset */
+	margin-bottom: 0; /* reset vertical handle offset */
+	border: 1px solid #2E6E9E;
+	color: #2E6E9E;
+	text-align: center;
+	font-size: 9px;
+}
+.ui-slider-horizontal {
+	/* set dynamically - width: 300px; */
+}
+.ui-slider-range {
+	background: #6699EE;
+}
+
+#titleDiv {
+	overflow:auto;
+	padding-right: 100px; /* match gcmLogo width */
+	background-color: #B5D29C;
+
+}
+#titleDiv div {
+}
+
+#calendarTitle, 
+#resultsDataFilters {
+	position: relative;
+	float: left;
+	padding: 0;
+	/*background-color: #ECECE2;*/
+	height: auto;
+	font-size: 12px;
+	text-align: left;
+	width: 100%;
+	background-color: #FFFFFF;
+
+}
+#calendarTitleContent {
+	padding: 5px;	
+}
+#calendarTitle h3 {
+	font-size: 24px;
+	margin: 5px 5px 2px 5px;
+	margin: 0;
+	text-align: left;
+}
+#calendarTitle h4 {
+	font-size: 24px;
+	margin: 5px 5px 2px 5px;
+	margin: 0;
+	text-align: left;
+}
+#calendarTitle span {
+	font-size: 12px;
+	margin: 1px 5px 5px 5px;
+	margin: 0;
+	text-align: left;
+}
+#gcmLogo, 
+#resultsDataStatus {
+	position: relative;
+	float:right;
+	width: 100px;       /* match parent titleDiv's padding-right */
+	margin-right: -100px;/* match parent titleDiv's padding-right */
+	height: 60px;
+	/*background-color: #AACCDD;*/
+	/*color: #2E6E9E;*/
+	text-align: center;
+	background-color: #B5D29C;
+}
+
+#gcmLogo h1 {
+	font-size: 36px;
+	font-weight: bold;
+	margin: 0;
+}
+#resultsData {
+	overflow:auto;
+	padding-right: 100px; /* match gcmLogo width */	
+}
+#resultsDataFilters {
+	/*background-color: #E6EEEE;*/
+	position: relative;
+	float: left;
+}	
+#resultsDataStatus {
+	height: auto;
+	position: relative;
+	float: left;
+	text-align:center;
+	/*background-color: #CCCCDD;*/
+	background-color: #B5D29C;	
+}
+#ResultsMapHdr {
+	padding: 2px 5px;	
+}
+.jumpLink {
+	color: #0085D0;
+	color: #0045CC;
+	text-decoration: none;
+}
+.actionable {
+	color: #005599;
+	text-decoration: none;
+}
+.actionable:hover,
+.jumpLink:hover {
+	text-decoration: underline;
+}
+
+.helpContainer {
+	overflow: auto;
+}
+.helpContainer h3 {
+	padding-left: 5px;
+}
+.exampleCalendars {
+	float: left;
+}
+#newDates {
+	display:none;
+	overflow: hidden;
+	/* width set in dialogDates in js */
+	text-align:left;
+}
+#pickDates {
+	position: relative;
+	float: left;
+}
+#submitDates {
+	position: relative;
+	float: left;
+}
+
+/*
+ * Google calendar colors
+ * ocean blue: #99B3CC
+ * icon blue: #307BC2
+ * forrest green: #B5D29C
+ * highway exit green: #41A774
+ * orange highway: #FFC345
+ * yellow road: #FFFD8B
+ * grey city block: #EDEAE2
+ * orange-brown buidling: #DED2AC
+ */
+
+
+/* end of file */
+
+  
+ 
+ 

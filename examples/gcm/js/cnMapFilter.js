@@ -13,7 +13,7 @@
 
 // cnMF, or window.cnMF, is the one and only global.  See cnMF.init() below
 
-(function (window){
+(function (){
 
 	// ba-debug.js - use debug.log() instead of console.log()
 	// debug.setLevel(0) turns off logging,
@@ -1022,6 +1022,6 @@
 
 	window.cnMF = cnMF;
 
-})(window);
+})();
 
 
