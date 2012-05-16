@@ -644,17 +644,11 @@ $(document).ready(function() {
 			//$('#ResultsMapEvents').css({'height':'auto','overflow':'visible'});
 
 			$(window).resize(function(){
-		  		debug.log('windowResizing, new WxH: '+$(window).width()+"x"+$(window).height());
-
-				if ((typeof windowResizing == 'boolean') && windowResizing) {
-			  		debug.log('windowResizing too fast !!');
-					return;
-				}
-				windowResizing=true;
-				setTimeout( function() {
+				//debug.log('windowResizing, new WxH: '+ $(window).width() +"x"+ $(window).height() );
+				cnMF.throttle.setTimeout( function(throttled) {
+					debug.log("windowResizing throttled, now updating after "+ throttled.elapsedMs +"ms and "+ throttled.called +" calls.");
 					windowResizedListener();
-					windowResizing=false;
-				}, 200);
+				}, 500, "window_resize", "afterLast");
 			});
 		}
 

@@ -1024,4 +1024,57 @@
 
 })();
 
+/*
+ * Purpose is to throttle duplicate UI events that happen in rapid succession
+ * so that an action dependent on them does not get called too often.
+ * For example, if the UI needs to be updated after the browser is resized, 
+ * there will probably more than one duplicate events fired while the user is resizing.
+ * So it is probably better to wait 300ms after the event is fired before updating.
+ *
+ * See setTimeout() below
+ */ 
+(function (){
+	var timeOuts = {};
+	cnMF.throttle = {
+		getTimeOuts : function () {
+			return timeOuts;
+		},
+		timeOuts : timeOuts,
+		/*
+		 *        window.setTimeout(doFunction(), 300);
+		 * cnMF.throttle.setTimeout(doFunction(), 300, "updateUI", "afterLast");
+		 */
+		setTimeout : function (callback, timeoutMs, namespace, when) {
+			if (!timeOuts[namespace]) {
+				// brand new timeout for this namespace, so create it
+				timeOuts[namespace] = {
+					startMs : (new Date).getTime(),
+					called : 1
+				}
+				timeOuts[namespace].timeoutID = window.setTimeout(function() {
+						timeOuts[namespace].elapsedMs = (new Date).getTime() - timeOuts[namespace].startMs;
+						callback(timeOuts[namespace]);
+						delete timeOuts[namespace];
+					}, timeoutMs);
+				return;
+			}
+			timeOuts[namespace].called++;
+		
+			// Already created a timeout for namespace, and it has not fired.
+			// Now check if we need to update it or leave it alone
+			if (when && when == "afterLast") {
+				// reset timeout
+				window.clearTimeout(timeOuts[namespace].timeoutID)
+				timeOuts[namespace].timeoutID = window.setTimeout(function() {
+					timeOuts[namespace].elapsedMs = (new Date).getTime() - timeOuts[namespace].startMs;
+					callback(timeOuts[namespace]);
+					delete timeOuts[namespace];
+				}, timeoutMs)
+			} else {
+				// no update needed
+			}
+		}
+	};
+})();
+
 
