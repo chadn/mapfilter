@@ -65,7 +65,7 @@
 		return '<a href="' + this.getDirectionsUrlStr() + '" title="Get Directions using maps.google.com">Directions</a>';
 	};
 	EventClass.prototype.insideCurMap = function(mapbox){
-		return this.validCoords ? mapbox.containsLatLng(new GLatLng(this.lt, this.lg, true)) : false; // TODO2
+		return this.validCoords ? mapbox.contains(new google.maps.LatLng(this.lt, this.lg)) : false;
 	};
 	// Returns true if current event occurs before start or after end.
 	EventClass.prototype.isFilteredbyDate = function(startDayOffset,endDayOffset){
@@ -90,61 +90,90 @@
 
 
 
-	// MarkerClass - designed to contain all google markers for map.
+	// MarkersClass - designed to contain all google markers for map.
 	// Note that one marker can contain multiple events.
-	var MarkerClass = makeClass();
-	MarkerClass.prototype.init = function ( gMap ) {
+	var MarkersClass = makeClass();
+	MarkersClass.prototype.init = function ( gMap ) {
 		// allMarkers obj is the main obj, where key is the coordinates and the
 		// value is markerObject - see addMarker
 		this.allMarkers = {};
 		this.gMap = gMap;  // the google map object
+		this.infoWindowMarker = null; 
+		this.infoWindow = new google.maps.InfoWindow({
+			size: new google.maps.Size(50,50)
+		});
+		var myMarkers = this;
+		google.maps.event.addListener(this.infoWindow, 'closeclick', function() {
+			myMarkers.closeInfoWindow();
+			// cnMF.coreOptions.cbHighlightItem(eventObj.getCoordsStr()); // API3 TODO: unhighlight
+		});
+	} 
+	MarkersClass.prototype.infoWindowIsOpen = function(){
+		return this.infoWindowMarker != null;
+	}
+	MarkersClass.prototype.openInfoWindow = function(content, marker){
+		if (this.infoWindowMarker) {
+			this.infoWindow.close(); // API3 Use setPosition() instead of closing / opening?
+		}
+		this.infoWindowMarker = marker;
+		this.infoWindow.setContent(content);
+		this.infoWindow.open(this.gMap, marker);
+	}
+	MarkersClass.prototype.closeInfoWindow = function(){
+		this.infoWindow.close();
+		this.infoWindowMarker = null;
 	}
 	// getMarkerObj() returns the marker object
-	MarkerClass.prototype.getMarkerObj = function(coordsStr){
+	MarkersClass.prototype.getMarkerObj = function(coordsStr){
 		// TODO also accept event obj (then we get coords from that)
 		return this.allMarkers[coordsStr];
 	}
 	// getGoogleMarker() returns the GMarker object created by google.
-	MarkerClass.prototype.getGoogleMarker = function(coordsStr){
+	MarkersClass.prototype.getGoogleMarker = function(coordsStr){
 		// TODO also accept event obj (then we get coords from that)
 		return this.allMarkers[coordsStr] && this.allMarkers[coordsStr].googleMarker;
 	}
 	// getEvents() returns an array of all event objects at the provided coordinates.
-	MarkerClass.prototype.getEvents = function(coordsStr){
+	MarkersClass.prototype.getEvents = function(coordsStr){
 		// TODO also accept event obj (then we get coords from that)
 		return this.allMarkers[coordsStr] && this.allMarkers[coordsStr].eventList;
 	}
 	// addMarker() creates google markers and event listener.
-	MarkerClass.prototype.addMarker = function(eventObj){
+	MarkersClass.prototype.addMarker = function(eventObj){
 		var coordsStr = eventObj.getCoordsStr();
 		if (this.allMarkers[coordsStr]) {
 			// Already have a marker at this location, so add event to list.
 			this.allMarkers[coordsStr].eventList.push(eventObj.id);
+			eventObj.setMarkerObj(this.allMarkers[coordsStr].googleMarker);
 			//debug.log("addMarker() added to existing marker, eventObj.id="+eventObj.id);
 			return;
 		}
 		// No markers existing at this location, so create one.
 		//debug.log("addMarker() creating marker, eventObj.id=%s, %o", eventObj.id, eventObj.getCoordsStr());
-		var myGLatLng = new GLatLng(eventObj.lt, eventObj.lg); 
-		// http://code.google.com/apis/maps/documentation/javascript/v2/reference.html#GMarker
-		var gMrkr = new GMarker( myGLatLng, {
-				icon:iconDefault
-				});
-		GEvent.addListener(gMrkr, "click", function() {
-			try {
-				_gaq.push(['_trackEvent', 'Interaction', 'gMrkr', 'click']);
-			} catch (e) {}
-			cnMF.coreOptions.cbHighlightItem(eventObj.getCoordsStr()); 
+		
+		// API3 DONE - google.maps.Marker
+		var myMarkers = this;
+		var gMarker = new google.maps.Marker({
+			position: new google.maps.LatLng(eventObj.lt, eventObj.lg),
+			map: myMarkers.gMap
 		});
-		this.gMap.addOverlay(gMrkr);
+		eventObj.setMarkerObj(gMarker);
+	
+		google.maps.event.addListener(gMarker, 'click', function() {
+			myMarkers.openInfoWindow("marker content", gMarker); // API3 TODO: add content cnMF.eventList[kks[cur]].infoHtml;
+			cnMF.coreOptions.cbHighlightItem(eventObj.getCoordsStr());
+			try {
+				_gaq.push(['_trackEvent', 'Interaction', 'gMarker', 'click']);
+			} catch (e) {}
+		});
+		
 		this.allMarkers[coordsStr] = {
-			googleMarker: gMrkr,
-			gLatLng: myGLatLng, // note this can also be accessed via googleMarker.gLatLng()
+			googleMarker: gMarker,
 			eventList: [eventObj.id]
-		}
+		}	
 		return;
 	}
-	MarkerClass.prototype.removeMarkers = function(eventObj){
+	MarkersClass.prototype.hideEvent = function(eventObj){
 		var coordsStr = eventObj.getCoordsStr();
 		for (var ii=0; this.allMarkers[coordsStr].eventList[ii]; ii++) {
 			if (this.allMarkers[coordsStr].eventList[ii] === eventObj.id) {
@@ -153,9 +182,10 @@
 			}
 		}
 		if (this.allMarkers[coordsStr].eventList.length === 0) {
-			this.gMap.removeOverlay(this.allMarkers[coordsStr].googleMarker);
+			// API3 TODO: Test hiding markers on map move
+			//this.gMap.removeOverlay(this.allMarkers[coordsStr].googleMarker);
 			// remove gLatLng?
-			delete this.allMarkers[coordsStr];
+			//delete this.allMarkers[coordsStr];  // API3 
 	   }
 	}
 
@@ -181,7 +211,6 @@
 	var cnMF = {
 		gcTitle: 'A Calendar', // this should always get overwritten by calendar data
 		gcLink: '',
-		googleApiKey: '',
 		reportData: {},
 		processGeocodeTimer: 0,
 		numDisplayed: 0,
@@ -197,22 +226,18 @@
 	//
 	cnMF.init = function (coreOptions) {
 		cnMF.coreOptions = coreOptions;
-		cnMF.myMarkers = MarkerClass(coreOptions.gMap); // stores google map marker, and marker's corresponding events
+		cnMF.myMarkers = MarkersClass(coreOptions.gMap); // stores google map marker, and marker's corresponding events
 		cnMF.curStartDay  = coreOptions.oStartDay;
 		cnMF.curEndDay	= coreOptions.oEndDay;
 		cnMF.origStartDay = coreOptions.oStartDay;
 		cnMF.origEndDay   = coreOptions.oEndDay;
-		cnMF.googleApiKey   = coreOptions.googleApiKey;
 		
 		cnMF.tz.offset = coreOptions.tzOffset ? coreOptions.tzOffset : ''; // Offset in hours and minutes from UTC
 		cnMF.tz.name = coreOptions.tzName ? coreOptions.tzName : 'unknown'; // Olson database timezone key (ex: Europe/Berlin)
 		cnMF.tz.dst = coreOptions.tzDst ? coreOptions.tzDst : 'unknown'; // bool for whether the tz uses daylight saving time
 		cnMF.tz.computedFromBrowser = (cnMF.tz.name != 'unknown');
 		
-		cnMF.myGeo = cnMF.geocodeManager({
-			googleApiKey: cnMF.googleApiKey,
-		});
-		
+		cnMF.myGeo = cnMF.geocodeManager();
 	}
 
 	cnMF.countTotal = function () {
@@ -275,26 +300,26 @@
 	cnMF.mapAllEvents = function(){
 		// first create the box that holds all event locations
 		var box = null;
+		var gMap = cnMF.coreOptions.gMap;
 		for (var i in cnMF.eventList) {
 			var kk = cnMF.eventList[i];
 			if (! kk.validCoords) continue; // skip unrecognized addresses
 
 			if (box === null) {
-				var corner = new GLatLng(kk.lt, kk.lg, true);
-				box = new GLatLngBounds(corner, corner);  // TODO2
+				var corner = new google.maps.LatLng(kk.lt, kk.lg); // API3 DONE
+				box = new google.maps.LatLngBounds(corner, corner); 
 			} else {
-				box.extend(new GLatLng(kk.lt, kk.lg, true));
+				box.extend( new google.maps.LatLng(kk.lt, kk.lg) );
 			}
 		}
-
 		if (!box) {
 			debug.log("mapAllEvents(): no events");
 			return false;
 		}
-
 		debug.log("mapAllEvents(): setting new map ");
-		zoom = cnMF.coreOptions.gMap.getBoundsZoomLevel(box);
-		cnMF.coreOptions.gMap.setCenter( box.getCenter(), (zoom < 2) ? zoom : zoom - 1  );
+		//zoom = gMap.getBoundsZoomLevel(box);
+		//gMap.setCenter( box.getCenter(), (zoom < 2) ? zoom : zoom - 1  );
+		gMap.fitBounds(box); // API3 DONE .. see also panToBounds()
 	}
 
 	cnMF.processGeocode = function(gObj) {
@@ -375,7 +400,7 @@
 			else if (kk.isDisplayed && (!insideCurMap || filteredOut)) {
 				// hide all markers outside of map or current filters
 				kk.isDisplayed = false;
-				cnMF.myMarkers.removeMarkers(kk);
+				cnMF.myMarkers.hideEvent(kk);
 				removed++;
 			}
 			else if (!kk.isDisplayed && insideCurMap && !filteredOut) {
@@ -396,7 +421,6 @@
 
 		return (removed || added);
 	}
-
 
 
 	// showDays(): Shows all events from newStartDay to newEndDay, called when date slider dragging stops
@@ -569,7 +593,6 @@
 		    //numUniqAddrDecoded = 0,
 		    //numUniqAddrErrors = 0,
 		    geoCache = {},
-		    googleApiKey,
 		    numReqs = 0,
 		    startTime = new Date().getTime(),
 
@@ -579,10 +602,6 @@
 		    maxBurstReq = 4,   // if timeout gets delayed, say 500ms, we can send 'maxBurstReq' at a time till we catch up
 		    maxRetries = 2;  // how many times an attempt to geocode service is made per address
 
-		GeocodeManager.init = function() {
-			googleApiKey = gOpts.googleApiKey;
-		}
-		
 		
 		GeocodeManager.count = function() {
 			var c = {
@@ -866,11 +885,13 @@
 			});
 		};
 
-		GeocodeManager.init();
 
 		return GeocodeManager;
 
-	}
+	};
+	(function(){
+		console.log("LOADED GeocodeManager")
+	})();
 	
 
 	// END GEOCODE

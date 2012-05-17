@@ -182,7 +182,6 @@ $(document).ready(function() {
 		gCalEmails: myURL.params.gc,
 		startDay: httpGetParam('sd') || 0,
 		endDay: httpGetParam('ed') || 42,
-		googleApiKey: "ABQIAAAAQ8l06ldZX6JSGI8gETtVhhTrRIj9DJoJiLGtM4J1SrTlGmVDcxQDT5BVw88R8j75IQxYlwFcEw6w9w",
 
 		mapChangeCallback: function (curData) {
 			msg = "<a href='"+ genLink(curData)+"' class='jumpLink' title='Click to load URL of this map in its current state (same zoom, coords, start and end dates). Copy and paste it for email, IM, etc.'>Map Link</a>";
@@ -197,7 +196,6 @@ $(document).ready(function() {
 
 	// google variables
 	var myGmap;
-	var gGeocoder;  // TODO: merge with mapfilter.geocoder
 
 	var jScrollPaneInitOpitons = {
 		showArrows:true,
@@ -257,7 +255,6 @@ $(document).ready(function() {
 				cbHighlightItem : cnMFUI.hItem,
 				oStartDay : date2days(cnMFUI.opts.startDay),
 				oEndDay : date2days(cnMFUI.opts.endDay),
-				googleApiKey: cnMFUI.opts.googleApiKey,
 				gMap : myGmap
 			};
 			if (!window.location.href.match(/tz=cal/) && timezone) {
@@ -418,40 +415,40 @@ $(document).ready(function() {
 		function initGMap() {
 
 			updateStatus('Loading Google Map');
-/*
-	        var myOptions = {
-	          center: new google.maps.LatLng(cnMFUI.opts.mapCenterLt, cnMFUI.opts.mapCenterLg),
-	          zoom: 8,
-	          mapTypeId: google.maps.MapTypeId.ROADMAP
-	        };
-	        var map = new google.maps.Map(document.getElementById("map_canvas"),
-	            myOptions);
-*/
+			
+			// https://google-developers.appspot.com/maps/documentation/javascript/reference#Map
+			var myOptions = {
+				center: new google.maps.LatLng(cnMFUI.opts.mapCenterLt, cnMFUI.opts.mapCenterLg),
+				zoom: cnMFUI.opts.mapZoom,
+				mapTypeId: google.maps.MapTypeId.ROADMAP // TODO: use cnMFUI.opts.mapType
+			};
+			var myGmap = new google.maps.Map(document.getElementById(cnMFUI.opts.mapId), myOptions);
+			
+			// listen for events that alter what markers may appear on map
+			$.each(['dragend', 'bounds_changed', 'zoom_changed'], function(index, mapEvent){
+				google.maps.event.addListener(myGmap, mapEvent, function() {
+					mapMovedListener();
+				});
+			});
+			/*  Do we need these?
+			google.maps.event.addListener(myGmap, 'click', function() {
+				cbUserInteracted(); 
+			});
+			google.maps.event.addListener(myGmap, 'dragstart', function() {
+				cbUserInteracted(); 
+			});
+			*/
+			
 
-
+			/*
 			if (!GBrowserIsCompatible()) {
 			   document.getElementById(cnMFUI.opts.mapId).innerHTML = unSupportedHtml;
 			   return;
 			}
-			var myGmap = new GMap2(document.getElementById(cnMFUI.opts.mapId));
-			myGmap.setUIToDefault();
-			myGmap.setCenter(new GLatLng(cnMFUI.opts.mapCenterLt, cnMFUI.opts.mapCenterLg), cnMFUI.opts.mapZoom, myGmap.getMapTypes()[cnMFUI.opts.mapType]);
-			gGeocoder = new GClientGeocoder();
-			GEvent.addListener(myGmap, 'moveend', function(){
-				mapMovedListener();
-			});
-			mapClickListener = GEvent.addListener(myGmap, 'click', function(){
-				// handles click and double-clicks, but not click-and-drag
-				cbUserInteracted(); 
-			});
-			mapDragstartListener = GEvent.addListener(myGmap, 'dragstart', function(){
-				// handles click-and-drag
-				cbUserInteracted(); 
-			});
-			mapLogo(myGmap);
-			mapJumpBox(myGmap);
+			*/
+			mapJumpBox();
 			mapRightTab(cnMFUI.opts.mapId);
-			iconDefault = new GIcon(G_DEFAULT_ICON, urlIconDefault);
+			//iconDefault = new GIcon(G_DEFAULT_ICON, urlIconDefault); // API3 TODO - MarkerImage remove?
 			return myGmap;
 		}
 
@@ -604,13 +601,13 @@ $(document).ready(function() {
 			});
 			$("#ResultsMapHdrFilterFrozen").click(function(){
 				// on the map, close a marker's info window
-				myGmap.closeInfoWindow();
-				   _gaq.push(['_trackEvent', 'Interaction', 'ResultsMapHdrFilterFrozen']);
+				cnMF.myMarkers.closeInfoWindow(); // API3 DONE
+			 	_gaq.push(['_trackEvent', 'Interaction', 'ResultsMapHdrFilterFrozen']);
 				//$("#ResultsMapHdrFilterFrozen").css('display','none');
 			});
 
 			// need to addListener to fire when infowindow is closed
-			GEvent.addListener(myGmap, "infowindowclose", function() {
+			google.maps.event.addListener(cnMF.myMarkers.infoWindow, "closeclick", function() { // API3 TODO: this only triggers from mouse closing, not from closing by clicking on another marker
 				   _gaq.push(['_trackEvent', 'Interaction', 'gMrkr', 'infowindowclose']);
 		  		debug.log('infowindowclose event fired, redrawing map');
 				//$('#ResultsMapHdrFilterFrozen').css('display','none');
@@ -646,7 +643,7 @@ $(document).ready(function() {
 			$(window).resize(function(){
 				//debug.log('windowResizing, new WxH: '+ $(window).width() +"x"+ $(window).height() );
 				cnMF.throttle.setTimeout( function(throttled) {
-					debug.log("windowResizing throttled, now updating after "+ throttled.elapsedMs +"ms and "+ throttled.called +" calls.");
+					debug.log("windowResizing throttled, now updating after "+ throttled.elapsedMs +"ms and "+ throttled.called +" call(s).");
 					windowResizedListener();
 				}, 500, "window_resize", "afterLast");
 			});
@@ -655,21 +652,21 @@ $(document).ready(function() {
 		function windowResizedListener() {
 			debug.log('windowResizedListener, new WxH: '+$(window).width()+"x"+$(window).height());
 
-			  	initSlider('resultsDataFilters'); // resize then redraw sliders
+			initSlider('resultsDataFilters'); // resize then redraw sliders
 
-				// clear table and remove scroll pane in order to resize it properly
-			
-				$('.scrollPane').jScrollPaneRemove();
-				updateResultsTable('ResultsMapEvents', true, true); // clear table
-				updateEventsContainerSize('#ResultsMapEventsTable'); // resize table
-				$('.scrollPane').jScrollPane(jScrollPaneInitOpitons); // add scroll pane
+			// clear table and remove scroll pane in order to resize it properly
+		
+			$('.scrollPane').jScrollPaneRemove();
+			updateResultsTable('ResultsMapEvents', true, true); // clear table
+			updateEventsContainerSize('#ResultsMapEventsTable'); // resize table
+			$('.scrollPane').jScrollPane(jScrollPaneInitOpitons); // add scroll pane
 
-				// since we cleared table, need repopulate it, too.
-				//updateResultsTable('ResultsMapEvents', true, false);
-				updateResults();
+			// since we cleared table, need repopulate it, too.
+			//updateResultsTable('ResultsMapEvents', true, false);
+			updateResults();
 
-				// check to see if we need to add/delete markers
-				mapRedraw();
+			// check to see if we need to add/delete markers
+			mapRedraw();
 		}
 
 		function updateEventsContainerSize(eventsContainerSelector) {
@@ -721,25 +718,23 @@ $(document).ready(function() {
 		   * (2) when infowindow is open, don't redraw map, don't update results, don't display "Filtered by MAP"
 		   */
 		function updateFilters() {
+			debug.log('updateFilters() cnMF.filteredByDate is ', cnMF.filteredByDate);
 			if (cnMF.filteredByDate) {
 				$("#ResultsMapHdrFilterByDate").css('display','inline');
-				debug.log('cnMF.filteredByDate is true: ', cnMF.filteredByDate);
 			} else {
 				$("#ResultsMapHdrFilterByDate").css('display','none');
-				debug.log('cnMF.filteredByDate is false: ', cnMF.filteredByDate);
 			}
-			if (!myGmap.getInfoWindow().isHidden()) {
+			if (cnMF.myMarkers.infoWindowIsOpen()) {
 				$("#ResultsMapHdrFilterByMap").css('display','none');
 				$("#ResultsMapHdrFilterFrozen").css('display','inline');
-					debug.log('getInfoWindow is showing');
+					debug.log('updateFilters() InfoWindow is showing');
 			} else {
 				$("#ResultsMapHdrFilterFrozen").css('display','none');
+				debug.log('updateFilters() cnMF.filteredByMap is '+ cnMF.filteredByMap);
 				if (cnMF.filteredByMap) {
 				//if (cnMF.numDisplayed == cnMF.countKnownAddresses())
-					debug.log('cnMF.filteredByMap is true: ', cnMF.filteredByMap);
 					$("#ResultsMapHdrFilterByMap").css('display','inline');
 				} else {
-					debug.log('cnMF.filteredByMap is false: ', cnMF.filteredByMap);
 					$("#ResultsMapHdrFilterByMap").css('display','none');
 				}
 			}
@@ -832,7 +827,8 @@ $(document).ready(function() {
 */
 
 		function getMapType(oMap) {
-			mm = oMap.getMapTypes().length;
+			return -1;
+			mm = oMap.getMapTypes().length; // API3 TODO
 			for (nn = 0; nn < mm; nn++){
 			  if (oMap.getMapTypes()[nn] == oMap.getCurrentMapType())
 				return nn;
@@ -890,22 +886,20 @@ $(document).ready(function() {
 
 
 		function mapMovedListener() {
-
-			  if (!myGmap.getInfoWindow().isHidden()) {
+			if ( cnMF.myMarkers.infoWindowIsOpen() ) {
 				  debug.log("mapMovedListener(): infowindow is open, not redrawing.");
 				  return;
 			}
-			  debug.log("mapMovedListener(): redrawing ...");
-			  mapRedraw();
-				//debug.log("sleeping for 2secs");
-				//sleep(2000);
-				//debug.log("woke up !!");
+			cnMF.throttle.setTimeout( function(throttled) {
+				debug.log("mapMovedListener throttled, now redrawing after "+ throttled.elapsedMs +"ms and "+ throttled.called +" call(s).");
+				mapRedraw();
+			}, 500, "mapMovedListener");
 		}
 
 
 
 		  // Insert Jump Box (aka goto address)
-		function mapJumpBox(oMap) {
+		function mapJumpBox() {
 
 			var info=document.createElement('div');
 			//info.id='SearchBox';
@@ -920,7 +914,7 @@ $(document).ready(function() {
 				+ '" onfocus="if (this.value == \''+ jumptxt +'\') {this.value = \'\';}" onblur="if '
 				+ '(this.value == \'\') {this.value = \''+ jumptxt +'\';}" /></form>';
 
-			oMap.getContainer().appendChild(info);
+			document.getElementById(cnMFUI.opts.mapId).appendChild(info);
 		}
 
 	
@@ -944,20 +938,6 @@ $(document).ready(function() {
 				
 				}
 			});
-		}
-
-		function mapLogo(oMap) {
-			/* Insert Logo on Map */
-			var info=document.createElement('div');
-			info.id='LogoInfo';
-			info.style.position='absolute';
-			info.style.right='4px';
-			info.style.bottom='20px';
-			info.style.backgroundColor='transparent';
-			info.style.zIndex=25500;
-			info.innerHTML='<a href="http://chadnorwood.com/" title="Powered by Craft Beer"><img src="http://chadnorwood.com/beermug.ico" style="border:0; margin: 2px;"/></a>';
-
-			oMap.getContainer().appendChild(info);
 		}
 
 
@@ -1219,7 +1199,7 @@ $(document).ready(function() {
 			}
 		}
 
-		function cbUserInteracted() {
+		function cbUserInteracted_DELME() {
 			if (cnMF.reportData.userInteracted) {
 				// already recorded first user interaction
 				return;
@@ -1428,7 +1408,7 @@ $(document).ready(function() {
 
 		unSupportedHtml: "Unfortunately your browser doesn't support Google Maps.<br /> To check browser compatibility visit the following <a href=\"http://local.google.com/support/bin/answer.py?answer=16532&topic=1499\">link</a>.",
 
-		googleApiKey: 'ABQIAAAAQ8l06ldZX6JSGI8gETtVhhTrRIj9DJoJiLGtM4J1SrTlGmVDcxQDT5BVw88R8j75IQxYlwFcEw6w9w' // chadnorwood.com
+		// googleApiKey: 'ABQIAAAAQ8l06ldZX6JSGI8gETtVhhTrRIj9DJoJiLGtM4J1SrTlGmVDcxQDT5BVw88R8j75IQxYlwFcEw6w9w' // v2 api for chadnorwood.com
 
 	},
 
@@ -1446,18 +1426,18 @@ $(document).ready(function() {
 		- highlight: when marker highlights more than 1 event, need 2 highlights - brighter shade for current one, and less bright for all others at same location
 		- make event list move to highlighted event (jscrollpane - update css: top)
 		*/
-
+		var gMrkr;
 		if (typeof n == 'number') {
 			// clicked on list, only one to be displayed in map info window
 			kks = [n];
-			gMrkr = cnMF.myMarkers.getGoogleMarker(cnMF.eventList[n].getCoordsStr());
+			gMrkr = cnMF.eventList[n].getMarkerObj();
 		} else if (typeof n == 'string') {
-			// n is coordinaetes string.  clicked on map, could be more than one event
+			// n is coordinates string.  clicked on map, could be more than one event
 			kks = cnMF.myMarkers.getEvents(n);
 			gMrkr = cnMF.myMarkers.getGoogleMarker(n);
 		}
-
-		if (!cur) cur = 0;
+		cur = (typeof cur === 'undefined') ? 0 : cur;
+		
 		infoHtml = cnMF.eventList[kks[cur]].infoHtml;
 		if (kks.length > 1) {
 			href = '<a href="javascript:void(0)" onclick="cnMFUI.hItem(\''+ n +'\',';
@@ -1486,9 +1466,7 @@ $(document).ready(function() {
 
 		  // note - addListener setup in initResults() for map's infowindowclose event, calls mapRedraw
 		  // open info window for item and center it
-		  myGmap.closeInfoWindow();
-		  //myGmap.panTo(gMrkr.getLatLng());
-		  gMrkr.openInfoWindowHtml(infoHtml);
+		  cnMF.myMarkers.openInfoWindow(infoHtml, gMrkr);
 
 		  $("#ResultsMapHdrFilterByMap").css('display','none');
 		  $("#ResultsMapHdrFilterFrozen").css('display','inline');
@@ -1506,29 +1484,38 @@ $(document).ready(function() {
 			newZoom = curZoom + (increaseZoom > 1 ? increaseZoom : 1);
 		}
 		debug.warn("zoomTo(): maxZoom="+maxZoom+", curZoom="+curZoom+", newZoom="+newZoom);
-		coords = cnMF.eventList[id].getCoordsStr();
-		myGmap.setCenter(cnMF.myMarkers.getGoogleMarker(coords).getLatLng(), newZoom);
+		//coords = cnMF.eventList[id].getCoordsStr();
+		//myGmap.setCenter(cnMF.myMarkers.getGoogleMarker(coords).getLatLng(), newZoom);
+		myGmap.setCenter( cnMF.eventList[id].getMarkerObj().getPosition() ); // API3 DONE
+		myGmap.setZoom(newZoom);
+		
 		//mapChanged();
 	},
 
 	jumpToAddress: function(address) {
 
-		  // If its a street address, we want to zoom in more than if city or country
-		  // For now, assuming street address if address contains a comma
-		  if (address.search(/,/) == -1) {cZoom=11;} else {cZoom=16;}
+		// If its a street address, we want to zoom in more than if city or country
+		// For now, assuming street address if address contains a comma
+		if (address.search(/,/) == -1) {cZoom=11;} else {cZoom=16;}
 
-		  myGmap.closeInfoWindow();
-		  gGeocoder.getLatLng( address, function(point) {
-			  if (!point) {
+		cnMF.myMarkers.closeInfoWindow();
+
+		cnMF.myGeo.addr2coords( address, function (gObj) {
+			if (gObj.lt) {
+				kk.lt = gObj.lt;
+				kk.lg = gObj.lg;
+				jumptxt = '';
+				myGmap.setCenter(new google.maps.LatLng(gObj.lt, gObj.lg) ); // API3 DONE
+				myGmap.setZoom(cZoom);
+			} else {
+				// log gObj.error;
 				// focus on something else so when user clicks on jumpBox again, it will clear
-				$("#LogoInfo").focus;
+				$("#gcmMapLogo").focus;
 				jumptxt = "NOT FOUND: "+ address;
 				$("#jumpBox").val(jumptxt);
-			  } else {
-				jumptxt = '';
-				myGmap.setCenter(point, cZoom);
+				
 			}
-		  });
+		});
 	},
 
 	htmlEncode:	function (value){

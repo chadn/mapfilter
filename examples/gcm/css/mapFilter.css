@@ -89,6 +89,17 @@ body {
 	z-index:2;
 }
 
+#gcmMapLogo { 
+	position:absolute;
+	bottom:20px;
+	right:4px;
+	background: url(http://chadnorwood.com/beermug.ico) no-repeat 0 0;
+	height:17px;
+	width:17px;
+	overflow:hidden;
+	z-index:25500;
+}
+
 
 
 /*
