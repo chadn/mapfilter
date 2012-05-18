@@ -30,6 +30,12 @@
 	}
 	debug.includeMsecs(true);
 
+	//
+	// Note on architecture of markers and events:
+	// EventClass - info on one event, including associated marker
+	// MarkerClass - info on one marker, its coords, google marker, and event list
+	// MarkersClass - contains all markers and info window
+	//
 
 	// EventClass - event objects created from this class contain all the
 	// info needed for an event, including original info from the calendar data
@@ -43,6 +49,7 @@
 		this.lg = 0;
 		this.validCoords = false;
 		this.isDisplayed = false;
+		this.markerObj = null;
 		this.addrOrig = '';
 		this.addrToGoogle = '';
 		this.addrFromGoogle = '';
@@ -54,6 +61,7 @@
 		// these are based on params
 		this.dateStartObj = cnMF.parseDate(this.dateStart);
 		this.dateEndObj = cnMF.parseDate(this.dateEnd);
+		return this;
 	};
 	EventClass.prototype.getCoordsStr = function(){
 		return this.validCoords ?  this.lt + "," + this.lg : '';
@@ -79,23 +87,26 @@
 	EventClass.prototype.setId = function ( id ) {
 		this.id = id;
 	};
-	EventClass.prototype.setMarkerObj = function (mrkr) {
-		//this.myGLatLng = existingGLatLng || new GLatLng(this.lt, this.lg);
-		this.markerObj = mrkr;
+	EventClass.prototype.setMarkerObj = function (markerObj) {
+		this.markerObj = markerObj;
 	};
+	// returns markerObj or null if no marker created
 	EventClass.prototype.getMarkerObj = function () {
 		return this.markerObj;
 	};
+	EventClass.prototype.getGoogleMarker = function () {
+		return this.markerObj && this.markerObj.googleMarker
+	};
 
 
 
-
+	// 
 	// MarkersClass - designed to contain all google markers for map.
 	// Note that one marker can contain multiple events.
 	var MarkersClass = makeClass();
 	MarkersClass.prototype.init = function ( gMap ) {
 		// allMarkers obj is the main obj, where key is the coordinates and the
-		// value is markerObject - see addMarker
+		// value is markerObject - see createMarker()
 		this.allMarkers = {};
 		this.gMap = gMap;  // the google map object
 		this.infoWindowMarker = null; 
@@ -105,88 +116,123 @@
 		var myMarkers = this;
 		google.maps.event.addListener(this.infoWindow, 'closeclick', function() {
 			myMarkers.closeInfoWindow();
-			// cnMF.coreOptions.cbHighlightItem(eventObj.getCoordsStr()); // API3 TODO: unhighlight
 		});
 	} 
 	MarkersClass.prototype.infoWindowIsOpen = function(){
 		return this.infoWindowMarker != null;
 	}
-	MarkersClass.prototype.openInfoWindow = function(content, marker){
+	MarkersClass.prototype.openInfoWindow = function(content, markerObj){
 		if (this.infoWindowMarker) {
+			// close infoWindow attached to another google marker
 			this.infoWindow.close(); // API3 Use setPosition() instead of closing / opening?
 		}
-		this.infoWindowMarker = marker;
+		this.infoWindowMarker = markerObj.googleMarker;
 		this.infoWindow.setContent(content);
-		this.infoWindow.open(this.gMap, marker);
+		this.infoWindow.open(this.gMap, markerObj.googleMarker);
+		cnMF.coreOptions.cbOpenedInfoWindow();
 	}
 	MarkersClass.prototype.closeInfoWindow = function(){
 		this.infoWindow.close();
 		this.infoWindowMarker = null;
+		cnMF.coreOptions.cbClosedInfoWindow();
 	}
-	// getMarkerObj() returns the marker object
-	MarkersClass.prototype.getMarkerObj = function(coordsStr){
+	// getMarkerObj() returns the marker object or null if not found
+	// coordsStrOrEvent can be one of three things: coordinates string, event object, event index number
+	MarkersClass.prototype.getMarkerObj = function(coordsStrOrEvent){
 		// TODO also accept event obj (then we get coords from that)
-		return this.allMarkers[coordsStr];
+		if (typeof coordsStrOrEvent === 'string') {
+			return this.allMarkers[coordsStrOrEvent]; // coordsStr
+
+		} else if (typeof coordsStrOrEvent === 'object') {
+			// note that an event object can be created without a marker object, 
+			// if need to check marker existance, best use eventObj.getMarkerObj()
+			return this.allMarkers[coordsStrOrEvent.getCoordsStr()]; // coordsStrOrEvent = eventObj
+			
+		} else if (typeof coordsStrOrEvent === 'number') {
+			// note that an event object can be created without a marker object, 
+			// if need to check marker existance, best use eventObj.getMarkerObj()
+			return this.allMarkers[cnMF.eventList[coordsStrOrEvent].getCoordsStr()]; // coordsStrOrEvent = event index
+
+		} else {
+			debug.warn("getMarkerObj(): only accept event obj or coords string, not: ", typeof coordsStrOrEvent, coordsStrOrEvent);
+			return null;
+		}
 	}
 	// getGoogleMarker() returns the GMarker object created by google.
-	MarkersClass.prototype.getGoogleMarker = function(coordsStr){
-		// TODO also accept event obj (then we get coords from that)
-		return this.allMarkers[coordsStr] && this.allMarkers[coordsStr].googleMarker;
+	MarkersClass.prototype.getGoogleMarker = function(coordsStrOrEvent){
+		return this.getMarkerObj(coordsStrOrEvent).googleMarker;
 	}
 	// getEvents() returns an array of all event objects at the provided coordinates.
-	MarkersClass.prototype.getEvents = function(coordsStr){
-		// TODO also accept event obj (then we get coords from that)
-		return this.allMarkers[coordsStr] && this.allMarkers[coordsStr].eventList;
+	MarkersClass.prototype.getEvents = function(coordsStrOrEvent){
+		return this.getMarkerObj(coordsStrOrEvent).eventList;
 	}
-	// addMarker() creates google markers and event listener.
-	MarkersClass.prototype.addMarker = function(eventObj){
-		var coordsStr = eventObj.getCoordsStr();
-		if (this.allMarkers[coordsStr]) {
-			// Already have a marker at this location, so add event to list.
-			this.allMarkers[coordsStr].eventList.push(eventObj.id);
-			eventObj.setMarkerObj(this.allMarkers[coordsStr].googleMarker);
-			//debug.log("addMarker() added to existing marker, eventObj.id="+eventObj.id);
-			return;
+	// showEvent() shows google marker via APIv3 setVisible, creating if necessary
+	MarkersClass.prototype.showEvent = function(eventObj){
+		var markerObj = this.getMarkerObj(eventObj) || this.createMarkerObj(eventObj);
+
+		markerObj.googleMarker.setVisible(true);
+		eventObj.setMarkerObj(markerObj);
+			
+		// make sure event is in markerObj's event list
+		for (var ii=0; ii < markerObj.eventList.length; ii++) {
+			if (markerObj.eventList[ii] === eventObj.id) {
+				// found it, so no need to add
+				return;
+			}
 		}
-		// No markers existing at this location, so create one.
-		//debug.log("addMarker() creating marker, eventObj.id=%s, %o", eventObj.id, eventObj.getCoordsStr());
+		// event was not found in markerObj, so add it.
+		markerObj.eventList.push(eventObj.id);
+	}
+	// createMarkerObj() creates google markers and event listener.
+	MarkersClass.prototype.createMarkerObj = function(eventObj){
+		var coordsStr = eventObj.getCoordsStr();
+		debug.log("createMarkerObj() creating marker, eventObj.id=%s, %s, %o", eventObj.id, coordsStr, eventObj);
+		return this.allMarkers[coordsStr] = MarkerClass(eventObj, this.gMap);
+	}
+	MarkersClass.prototype.hideEvent = function(eventObj){
+		var markerObj = this.getMarkerObj(eventObj);
 		
-		// API3 DONE - google.maps.Marker
-		var myMarkers = this;
-		var gMarker = new google.maps.Marker({
+		for (var ii=0; ii < markerObj.eventList.length; ii++) {
+			if (markerObj.eventList[ii] === eventObj.id) {
+				// found it, remove
+				markerObj.eventList.splice(ii, 1);
+			}
+		}
+		if (markerObj.eventList.length === 0) {
+			markerObj.googleMarker.setVisible(false);
+		}
+	}
+
+
+	// markerObj used in markersClass
+	var MarkerClass = makeClass();
+	MarkerClass.prototype.init = function ( eventObj, gMap ) {
+		this.coordsStr = eventObj.getCoordsStr();
+		this.eventList = [eventObj.id];
+		this.googleMarker = new google.maps.Marker({
 			position: new google.maps.LatLng(eventObj.lt, eventObj.lg),
-			map: myMarkers.gMap
+			map: gMap
 		});
-		eventObj.setMarkerObj(gMarker);
-	
-		google.maps.event.addListener(gMarker, 'click', function() {
-			myMarkers.openInfoWindow("marker content", gMarker); // API3 TODO: add content cnMF.eventList[kks[cur]].infoHtml;
-			cnMF.coreOptions.cbHighlightItem(eventObj.getCoordsStr());
+
+		// associate with eventObj
+		eventObj.setMarkerObj(this);
+
+		// add listener and callback hooks
+		var thisMarkerObj = this;
+		google.maps.event.addListener(thisMarkerObj.googleMarker, 'click', function() {
+			debug.log("googleMarker clicked at "+ thisMarkerObj.coordsStr);
+			cnMF.coreOptions.cbMarkerClicked(thisMarkerObj); // cbMarkerClicked function should call openInfoWindow()
 			try {
 				_gaq.push(['_trackEvent', 'Interaction', 'gMarker', 'click']);
 			} catch (e) {}
 		});
-		
-		this.allMarkers[coordsStr] = {
-			googleMarker: gMarker,
-			eventList: [eventObj.id]
-		}	
-		return;
+		return this;
+	} 
+	MarkerClass.prototype.getEvents = function(){
+		return this.eventList;
 	}
-	MarkersClass.prototype.hideEvent = function(eventObj){
-		var coordsStr = eventObj.getCoordsStr();
-		for (var ii=0; this.allMarkers[coordsStr].eventList[ii]; ii++) {
-			if (this.allMarkers[coordsStr].eventList[ii] === eventObj.id) {
-				// found it, remove
-				this.allMarkers[coordsStr].eventList.splice(ii, 1);
-			}
-		}
-		if (this.allMarkers[coordsStr].eventList.length === 0) {
-			// API3 TODO: Test hiding markers on map move
-			//this.gMap.removeOverlay(this.allMarkers[coordsStr].googleMarker);
-			// remove gLatLng?
-			//delete this.allMarkers[coordsStr];  // API3 
-	   }
+	MarkerClass.prototype.getEvent = function(markerEventIndex){
+		return this.eventList[markerEventIndex];
 	}
 
 
@@ -232,6 +278,15 @@
 		cnMF.origStartDay = coreOptions.oStartDay;
 		cnMF.origEndDay   = coreOptions.oEndDay;
 		
+		// if any callback functions are not defined as functions, assign them to empty functions so 
+		// code can assume they are functions after this point
+		$.each(['cbOpenedInfoWindow','cbClosedInfoWindow','cbMapRedraw','cbMarkerClicked'], 
+			function(index, cbfunc){
+				if (typeof cnMF.coreOptions[cbfunc] !== 'function') {
+					cnMF.coreOptions[cbfunc] = function() {}
+				}
+			}
+		);
 		cnMF.tz.offset = coreOptions.tzOffset ? coreOptions.tzOffset : ''; // Offset in hours and minutes from UTC
 		cnMF.tz.name = coreOptions.tzName ? coreOptions.tzName : 'unknown'; // Olson database timezone key (ex: Europe/Berlin)
 		cnMF.tz.dst = coreOptions.tzDst ? coreOptions.tzDst : 'unknown'; // bool for whether the tz uses daylight saving time
@@ -246,8 +301,8 @@
 	}
 	cnMF.countKnownAddresses = function () {
 		var xx = 0;
-		for (var ii in cnMF.eventList) {
-		 if (cnMF.eventList[ii].validCoords) xx++;
+		for (var ii=0; ii < cnMF.eventList.length; ii++) {
+			if (cnMF.eventList[ii].validCoords) xx++;
 		}
 		//cnMF.reportData.knownAddr = xx;
 		return xx;
@@ -272,6 +327,11 @@
 		e.id = cnMF.types.length;
 		cnMF.types.push(e);
 		return e;
+	}
+	// returns event obj given event index number
+	cnMF.getEventObj = function(eventIndex){
+		var x = cnMF.eventList[parseInt(eventIndex)];
+		return x;
 	}
 
 	cnMF.addCal = function(gCalUrl, calData){ 
@@ -306,7 +366,7 @@
 			if (! kk.validCoords) continue; // skip unrecognized addresses
 
 			if (box === null) {
-				var corner = new google.maps.LatLng(kk.lt, kk.lg); // API3 DONE
+				var corner = new google.maps.LatLng(kk.lt, kk.lg);
 				box = new google.maps.LatLngBounds(corner, corner); 
 			} else {
 				box.extend( new google.maps.LatLng(kk.lt, kk.lg) );
@@ -319,7 +379,7 @@
 		debug.log("mapAllEvents(): setting new map ");
 		//zoom = gMap.getBoundsZoomLevel(box);
 		//gMap.setCenter( box.getCenter(), (zoom < 2) ? zoom : zoom - 1  );
-		gMap.fitBounds(box); // API3 DONE .. see also panToBounds()
+		gMap.fitBounds(box); // API3 see also panToBounds()
 	}
 
 	cnMF.processGeocode = function(gObj) {
@@ -373,6 +433,7 @@
 		cnMF.filteredByMap = false;
 		//debug.log( "reset filteredByDate and filteredByMap to FALSE");
 
+		// loop through all events and see which ones are in map, etc.
 		for (var i in cnMF.eventList) {
 			var kk = cnMF.eventList[i];
 
@@ -405,8 +466,7 @@
 			}
 			else if (!kk.isDisplayed && insideCurMap && !filteredOut) {
 				// display events new to map
-				cnMF.coreOptions.cbBuildInfoHtml(kk);
-				cnMF.myMarkers.addMarker(kk);
+				cnMF.myMarkers.showEvent(kk);
 				kk.isDisplayed = true;
 				added++;
 			}

@@ -245,14 +245,18 @@ $(document).ready(function() {
 			debug.log('mapfilter().init(), cnMF:',cnMF);
 			initDivs();
 			myGmap = initGMap();
+			mapJumpBox(); 
+			mapRightTab(cnMFUI.opts.mapId);
+			
 			//updateSizes();
 
 			// initialize the core MapFilter
 			var initObj = {
 				// cb = callback functions
-				cbBuildInfoHtml : buildInfoHtml,
+				cbOpenedInfoWindow : infoWindowOpened,
+				cbClosedInfoWindow : infoWindowClosed,
 				cbMapRedraw : mapRedraw,
-				cbHighlightItem : cnMFUI.hItem,
+				cbMarkerClicked : markerClicked,
 				oStartDay : date2days(cnMFUI.opts.startDay),
 				oEndDay : date2days(cnMFUI.opts.endDay),
 				gMap : myGmap
@@ -384,7 +388,22 @@ $(document).ready(function() {
 
 			// need to redo how we deal with inital help screen.  Should switch between 2 main divs (help vs content), one is display:none
 			//$('#resultsDiv').html( $("#myHelp").html() );
+
+			// next / prev on infohtml in markers
+			$('body').on('click','a.marker_event_index', function(){
+				var eventIndex = parseInt($(this).data('event_index'));
+				var markerEventIndex = parseInt( $(this).data('marker_event_index') );
+				markerClicked(cnMF.myMarkers.getMarkerObj(eventIndex), markerEventIndex);
+				return false;
+			});
+			
+			$('body').on('click','a.event_table', function(){
+				eventClicked( cnMF.getEventObj($(this).data('event_index')) ); 
+				_gaq.push(['_trackEvent', 'Interaction', 'a.event_table']);
+				return false;
+			});
 		}
+
 		function getRtSideWidth() {
 			// make rtSide a 1/3 the width of container, with a minimum of 200px
 			return $(window).width() > 600 ? Math.floor($(window).width()/3) : 200;
@@ -430,25 +449,6 @@ $(document).ready(function() {
 					mapMovedListener();
 				});
 			});
-			/*  Do we need these?
-			google.maps.event.addListener(myGmap, 'click', function() {
-				cbUserInteracted(); 
-			});
-			google.maps.event.addListener(myGmap, 'dragstart', function() {
-				cbUserInteracted(); 
-			});
-			*/
-			
-
-			/*
-			if (!GBrowserIsCompatible()) {
-			   document.getElementById(cnMFUI.opts.mapId).innerHTML = unSupportedHtml;
-			   return;
-			}
-			*/
-			mapJumpBox();
-			mapRightTab(cnMFUI.opts.mapId);
-			//iconDefault = new GIcon(G_DEFAULT_ICON, urlIconDefault); // API3 TODO - MarkerImage remove?
 			return myGmap;
 		}
 
@@ -592,7 +592,6 @@ $(document).ready(function() {
 				   _gaq.push(['_trackEvent', 'Interaction', 'ResultsMapHdrFilterByMap']);
 				cnMF.mapAllEvents();
 				debug.warn('------ ResultsMapHdrFilterByMap clicked');
-
 			});
 			$("#ResultsMapHdrFilterByDate").click(function(){
 				   _gaq.push(['_trackEvent', 'Interaction', 'ResultsMapHdrFilterByDate']);
@@ -601,28 +600,19 @@ $(document).ready(function() {
 			});
 			$("#ResultsMapHdrFilterFrozen").click(function(){
 				// on the map, close a marker's info window
-				cnMF.myMarkers.closeInfoWindow(); // API3 DONE
+				cnMF.myMarkers.closeInfoWindow();
 			 	_gaq.push(['_trackEvent', 'Interaction', 'ResultsMapHdrFilterFrozen']);
-				//$("#ResultsMapHdrFilterFrozen").css('display','none');
+				$("#ResultsMapHdrFilterFrozen").css('display','none');
 			});
-
-			// need to addListener to fire when infowindow is closed
-			google.maps.event.addListener(cnMF.myMarkers.infoWindow, "closeclick", function() { // API3 TODO: this only triggers from mouse closing, not from closing by clicking on another marker
-				   _gaq.push(['_trackEvent', 'Interaction', 'gMrkr', 'infowindowclose']);
-		  		debug.log('infowindowclose event fired, redrawing map');
-				//$('#ResultsMapHdrFilterFrozen').css('display','none');
-				mapRedraw();
-			});
-
 
 			$("#ResultsMapUnknown").html('<div id="ResultsMapUnknownHdr"></div><div id="ResultsMapUnknownTable"></div>');
 			$("#ResultsMapUnknownHdr").html('The Following Events Had Addresses (Where) That Could Not Be Found. &nbsp; See FAQ');
 
 			var dialogUnknowns = $("#ResultsMapUnknown").dialog({
-		  		bgiframe: true, autoOpen: false, resizable: true,
+				bgiframe: true, autoOpen: false, resizable: true,
 				modal: true
 			});
-		  	$("#ResultsMapHdrWarning").click(function(){
+			$("#ResultsMapHdrWarning").click(function(){
 				_gaq.push(['_trackEvent', 'Interaction', 'ResultsMapHdrWarning']);
 				dialogUnknowns.dialog('open');
 		  	});
@@ -648,6 +638,26 @@ $(document).ready(function() {
 				}, 500, "window_resize", "afterLast");
 			});
 		}
+		
+		function infoWindowOpened() {
+			$("#ResultsMapHdrFilterByMap").css('display','none'); // put this here?
+			$("#ResultsMapHdrFilterFrozen").css('display','inline');
+		}
+		
+		function infoWindowClosed() {
+			
+			// API3 TODO: this only triggers from mouse closing, not from closing by clicking on another marker
+			/*
+			google.maps.event.addListener(cnMF.myMarkers.infoWindow, "closeclick", function() { 
+			   _gaq.push(['_trackEvent', 'Interaction', 'gMrkr', 'infowindowclose']);
+				debug.log('infowindowclose event fired, redrawing map');
+				//$('#ResultsMapHdrFilterFrozen').css('display','none');
+			});
+			*/
+			debug.log('infoWindowClosed, redrawing map');
+			$("a.event_table").removeClass("highlight2");
+			mapRedraw();
+		}
 
 		function windowResizedListener() {
 			debug.log('windowResizedListener, new WxH: '+$(window).width()+"x"+$(window).height());
@@ -670,7 +680,7 @@ $(document).ready(function() {
 		}
 
 		function updateEventsContainerSize(eventsContainerSelector) {
-		  	if ((typeof updating == 'boolean') && updating) {
+			if ((typeof updating == 'boolean') && updating) {
 				debug.log(ems+"updateEventsContainerSize() in process, skipping.");
 				return;
 			}
@@ -712,11 +722,11 @@ $(document).ready(function() {
 			}
 		}
 
-		  /*
-		   * updateFilters() handles 2 filters:
-		   * (1) if not showing all events, show "Filtered by MAP"
-		   * (2) when infowindow is open, don't redraw map, don't update results, don't display "Filtered by MAP"
-		   */
+		/*
+		 * updateFilters() handles 2 filters:
+		 * (1) if not showing all events, show "Filtered by MAP"
+		 * (2) when infowindow is open, don't redraw map, don't update results, don't display "Filtered by MAP"
+		 */
 		function updateFilters() {
 			debug.log('updateFilters() cnMF.filteredByDate is ', cnMF.filteredByDate);
 			if (cnMF.filteredByDate) {
@@ -742,18 +752,18 @@ $(document).ready(function() {
 		}
 
 		function createResultsTable(divId, onlyValidCoords){
-		  	debug.warn("createResultsTable() ", divId, onlyValidCoords);
+			debug.warn("createResultsTable() ", divId, onlyValidCoords);
 
 			// note: give table dummy tbody data or tablesorter gives "parsers is undefined" error
-		  	tableHtml = "<table id='"+divId+"Table' class='tablesorter'><thead><tr>"
+			tableHtml = "<table id='"+divId+"Table' class='tablesorter'><thead><tr>"
 					+ "<th id='thDate' title='Click to Sort by Event Date, timezone "+cnMF.tz.name+"'>Date</th>"
 					+ "<th title='Click to Sort by Event Name'>Name</th>"
 					+ "<th title='Click to Sort by Event Description'>Description</th>"
 					+ "<th title='Click to Sort by Event Location'>Where</th>"
-		  			+ "</tr></thead><tbody><tr>"+emptyTableHtml+"</tr></tbody></table>";
+					+ "</tr></thead><tbody><tr>"+emptyTableHtml+"</tr></tbody></table>";
 			pagerHtml = "<div id='"+divId+"Pager'>"+$("#pager").html()+"</div>";
 			pagerHtml = '';
-		  	$('#' + divId).html(tableHtml+pagerHtml);
+			$('#' + divId).html(tableHtml+pagerHtml);
 
 			//$('#' + divId +"Pager .pagesize").val(cnMFUI.opts.numTableRows); // rows in table
 			$("#" + divId + "Table").tablesorter()
@@ -788,7 +798,8 @@ $(document).ready(function() {
 				// rowHTML += "<td>" + cnMF.formatDate(kk.dateStart, 'm/D d g:ia') + "</td>";
 
 
-		  		rowHTML += onlyValidCoords ? '<td><a class="eventNameTrigger actionable" onclick="cnMFUI.hItem(' + kk.id + ')"  title="Click to show marker on map" href="javascript:void(0)" style="display:block">'
+		  		rowHTML += onlyValidCoords ? 
+					'<td><a class="actionable event_table" data-event_index="'+ kk.id +'" title="Click to show marker on map" style="display:block">'
 						+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.name, 100, 0, '', 1)) + "</a></td>"
 					: '<td>'+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.name, 100, 0, '', 1)) + '</td>';
 
@@ -946,32 +957,88 @@ $(document).ready(function() {
 		}
 
 
-		function buildInfoHtml (kk) {
-			  if (kk.infoHtml) return;
-			  //str = i+" id("+kk['id']+"): "+kk['n']+"\n"+ kk['lt'] +", "+ kk['lg'] ;
-			  //alert(str);
-			  //desc = "Star(s): "+ kk['r'] +" &nbsp; Category: "+ rawJson[0][kk['c']] + "<p>\n" + kk['d'];
-			  //infoHTML = "<div class=\"IW\"><h1>"+ kk['n'] +"<\/h1><div id=\"IWContent\">"+ desc +"</div>"+footer+"</div>";
-
-			  kk.infoHtml = "<div class='IW'><h1>"+ kk.name +"<\/h1>";
-			  kk.infoHtml += moreThanOneCal ? '<h3>Calendar: '+kk.calTitle+'</h3>' : '';
-			  kk.infoHtml += "<div id='IWContent' class='preWrapped'>"+ cnMFUI.maxStr( addLinks(kk.desc), 900, 26, kk.url) +"</div>";
-			  kk.infoHtml += '<div id="IWZoom">';
-			  kk.infoHtml += cnMF.formatDate(kk.dateStart, 'F D, l gx') +"-"+ cnMF.formatDate(kk.dateEnd, 'gx') +"<br>";
-			  kk.infoHtml += '<a href="javascript:void(0)" onclick="cnMFUI.zoomTo('+ kk.id +')">Zoom To</a> - ';
-			  kk.infoHtml += kk.addrOrig +" - " + kk.getDirectionsHtmlStr();
-			  kk.infoHtml += '</div></div>';
+		function buildInfoHtml (eventObj) {
+			if (!eventObj || !eventObj.name) {
+				return 'Bad event object';
+			}
+			var infoHtml = "<div class='IW'><h1>"+ eventObj.name +"<\/h1>";
+			infoHtml += moreThanOneCal ? '<h3>Calendar: '+eventObj.calTitle+'</h3>' : '';
+			infoHtml += "<div id='IWContent' class='preWrapped'>"+ cnMFUI.maxStr( addLinks(eventObj.desc), 900, 26, eventObj.url) +"</div>";
+			infoHtml += '<div id="IWZoom">';
+			infoHtml += cnMF.formatDate(eventObj.dateStart, 'F D, l gx') +"-"+ cnMF.formatDate(eventObj.dateEnd, 'gx') +"<br>";
+			infoHtml += '<a href="javascript:void(0)" onclick="cnMFUI.zoomTo('+ eventObj.id +')">Zoom To</a> - ';
+			infoHtml += eventObj.addrOrig +" - " + eventObj.getDirectionsHtmlStr();
+			infoHtml += '</div></div>';
+			return infoHtml;
 		}
 
+		// markerEventIndex - optional,  when there's more than one event at a location, show this event
+		function getUpdatedInfoHtml(markerObj, markerEventIndex) {
+			debug.log("getUpdatedInfoHtml", markerObj, markerEventIndex);
+			
+			var markerEvents = markerObj.getEvents();
+			// Note that markerEventIndex is the index of an array of events at a specific marker location,
+			// whereas eventIndex is the index of an array of all events.
+			markerEventIndex = (typeof markerEventIndex === 'undefined') ? 0 : markerEventIndex; // cur
+			var eventIndex = markerEvents[markerEventIndex];
+			var eventObj = cnMF.getEventObj(eventIndex);
+			
+			var infoHtml = buildInfoHtml(eventObj);
+
+			if (markerEvents.length > 1) {
+				// More than one event, add clickable next/prev to bottom of infoHtml
+				var href = '<a class="actionable marker_event_index" data-event_index="'+ eventIndex +'" data-marker_event_index="';
+				var prev =  (markerEventIndex == 0) ? '' : href + (markerEventIndex-1) +'">&lt;&lt; prev</a> - ';
+				var next =  (markerEventIndex == (markerEvents.length-1)) ? '' : ' - '+ href + (markerEventIndex+1) + '">next &gt;&gt;</a> ';
+				infoHtml += "<p><div style='text-align:center'>"+ prev +"Showing "+ (markerEventIndex+1) +" of "+ markerEvents.length;
+				infoHtml += " Events at this location"+ next +"</div>";
+			}
+			return infoHtml;
+		}
+		
+		function highlightEvent(eventIds) {
+			debug.log("highlightEvent", eventIds);
+			eventIds = typeof eventIds == 'number' ? [eventIds]
+				: typeof eventIds == 'string' ? [parseInt(eventIds)] : eventIds;
+			/*
+			CHAD TODO:
+			- highlight: when marker highlights more than 1 event, need 2 highlights - brighter shade for current one, and less bright for all others at same location
+			- make event list move to highlighted event (jscrollpane - update css: top)
+			*/
+			// remove any previous highlights and highlight new ones
+			$("a.event_table").each(function(){
+				$(this).removeClass("highlight2");
+				for (var ii=0; ii < eventIds.length; ii++) {
+					if ($(this).data('event_index') == eventIds[ii]) {
+						debug.log("highlightEvent found event id: "+ eventIds[ii]);
+						$(this).addClass("highlight2");
+					}
+				}
+			});
+		}
+
+		function eventClicked(eventObj) {
+			debug.log("eventClicked", eventObj.id, eventObj);
+			// note - addListener setup in initResults() for map's infowindowclose event, calls mapRedraw
+			cnMF.myMarkers.openInfoWindow( buildInfoHtml(eventObj), eventObj.getMarkerObj() );
+			highlightEvent([eventObj.id]);
+		}
+
+		function markerClicked(markerObj, markerEventIndex) {
+			debug.log("markerClicked", markerObj, markerEventIndex);
+			markerEventIndex = (typeof markerEventIndex === 'undefined') ? 0 : markerEventIndex;
+			cnMF.myMarkers.openInfoWindow(getUpdatedInfoHtml(markerObj, markerEventIndex), markerObj);
+			highlightEvent(markerObj.getEvent(markerEventIndex));
+		}
 
 		function updateStatus(msg) {
 		  	$("#MapStatus").html(msg);
-			debug.log("updateStatus(): "+msg);
+			debug.log("updateStatus(): "+ msg);
 		}
 
 		function updateStatus2(msg) {
 		  	$("#MapStatus2").html(msg);
-			debug.log("updateStatus2(): "+msg);
+			debug.log("updateStatus2(): "+ 	msg);
 		}
 
 
@@ -1416,64 +1483,6 @@ $(document).ready(function() {
 	opts: {},
 
 
-	// jquery.mapFilter.hItem() should be called whenever user clicks on
-	// map marker or clicks on name in results tab,
-	// Opens info window for marker and highights name in results tab
-	hItem: function(n, cur) {
-
-		/*
-		CHAD TODO:
-		- highlight: when marker highlights more than 1 event, need 2 highlights - brighter shade for current one, and less bright for all others at same location
-		- make event list move to highlighted event (jscrollpane - update css: top)
-		*/
-		var gMrkr;
-		if (typeof n == 'number') {
-			// clicked on list, only one to be displayed in map info window
-			kks = [n];
-			gMrkr = cnMF.eventList[n].getMarkerObj();
-		} else if (typeof n == 'string') {
-			// n is coordinates string.  clicked on map, could be more than one event
-			kks = cnMF.myMarkers.getEvents(n);
-			gMrkr = cnMF.myMarkers.getGoogleMarker(n);
-		}
-		cur = (typeof cur === 'undefined') ? 0 : cur;
-		
-		infoHtml = cnMF.eventList[kks[cur]].infoHtml;
-		if (kks.length > 1) {
-			href = '<a href="javascript:void(0)" onclick="cnMFUI.hItem(\''+ n +'\',';
-			prev =  (cur == 0) ? '' : href + (cur-1) +')">&lt;&lt; prev</a> - ';
-			next =  (cur == (kks.length-1)) ? '' : ' - '+ href + (cur+1) + ')">next &gt;&gt;</a> ';
-			infoHtml += "<p><div style='text-align:center'>"+ prev +"Showing "+ (cur+1) +" of "+ kks.length;
-			infoHtml += " Events at this location"+ next +"</div>";
-		}
-
-		  debug.log("hItem("+n+") list: ", kks);
-		  debug.log("hItem("+n+") cnMFUI.opts.listId: ", cnMFUI.opts.listId);
-
-		  // remove any previous highlights and highlight new ones
-		  //$("#"+ cnMFUI.opts.listId +" a").removeClass("highlight2");
-		  // TODO use this - $("a.eventNameTrigger.highlight2").removeClass("highlight2");
-		  $("a.eventNameTrigger").removeClass("highlight2");
-		  $("a.eventNameTrigger").click(function(){
-				_gaq.push(['_trackEvent', 'Interaction', 'a.eventNameTrigger']);
-		  });
-
-		  //$("#"+ cnMFUI.opts.listId +" a[onclick*=hItem("+ kks[cur] +")]").addClass("highlight2");
-		  for (var ii in kks) {
-			$("#"+ cnMFUI.opts.listId +" a[onclick*=hItem("+ kks[ii] +")]").addClass("highlight2");
-			$("a.eventNameTrigger[onclick*=hItem("+ kks[ii] +")]").addClass("highlight2");
-		}
-
-		  // note - addListener setup in initResults() for map's infowindowclose event, calls mapRedraw
-		  // open info window for item and center it
-		  cnMF.myMarkers.openInfoWindow(infoHtml, gMrkr);
-
-		  $("#ResultsMapHdrFilterByMap").css('display','none');
-		  $("#ResultsMapHdrFilterFrozen").css('display','inline');
-
-		  //mapChanged();
-		  return false;
-	},
 
 	zoomTo: function(id) {
 		var maxZoom = 19,
@@ -1486,7 +1495,7 @@ $(document).ready(function() {
 		debug.warn("zoomTo(): maxZoom="+maxZoom+", curZoom="+curZoom+", newZoom="+newZoom);
 		//coords = cnMF.eventList[id].getCoordsStr();
 		//myGmap.setCenter(cnMF.myMarkers.getGoogleMarker(coords).getLatLng(), newZoom);
-		myGmap.setCenter( cnMF.eventList[id].getMarkerObj().getPosition() ); // API3 DONE
+		myGmap.setCenter( cnMF.eventList[id].getGoogleMarker().getPosition() );
 		myGmap.setZoom(newZoom);
 		
 		//mapChanged();
@@ -1505,7 +1514,7 @@ $(document).ready(function() {
 				kk.lt = gObj.lt;
 				kk.lg = gObj.lg;
 				jumptxt = '';
-				myGmap.setCenter(new google.maps.LatLng(gObj.lt, gObj.lg) ); // API3 DONE
+				myGmap.setCenter(new google.maps.LatLng(gObj.lt, gObj.lg) );
 				myGmap.setZoom(cZoom);
 			} else {
 				// log gObj.error;
@@ -1513,7 +1522,6 @@ $(document).ready(function() {
 				$("#gcmMapLogo").focus;
 				jumptxt = "NOT FOUND: "+ address;
 				$("#jumpBox").val(jumptxt);
-				
 			}
 		});
 	},
