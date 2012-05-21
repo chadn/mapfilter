@@ -45,7 +45,7 @@ body {
 	left:0;
 	height:100%;
 	width:100%;
-    background:blue;
+    background:#99B3CC;
 }
 
 /* Info Window styles */
@@ -234,8 +234,11 @@ body {
 	padding-left: 5px;
 }
 
+
+
+#ResultsMapEventsTable tbody,
 #ResultsMapEvents {
-	overflow:hidden;
+	overflow:auto;
 }
 .event_table {
 	display:block;
@@ -324,7 +327,7 @@ table.tablesorter {margin: 0 0 0 0;}
 }
 
 .jScrollPaneContainer {
-	border: 5px solid #9999CC;
+	/*border: 5px solid #9999CC;*/
 }
 
 .winXP .jScrollPaneTrack {

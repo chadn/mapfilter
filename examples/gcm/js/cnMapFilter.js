@@ -418,14 +418,15 @@
 
 
 
-	// returns true if changes were made to map, false otherwise
+	// Checks all events, hiding/showing corresponding markers if need be.
+	// Returns true if changes were made to map, false otherwise
 	//
 	cnMF.updateMarkers= function(){
 
-		debug.log( "cnMF.updateMarkers() called ..");
+		//debug.log( "cnMF.updateMarkers() called ..");
 		mapbox = cnMF.coreOptions.gMap.getBounds();
 
-		if(0) debug.time('checking all markers');
+		//debug.time('checking all markers');
 		added = 0;
 		removed = 0;
 		unchanged = 0;
@@ -471,7 +472,7 @@
 				added++;
 			}
 		}
-		if(0) debug.timeEnd('checking all markers');
+		//debug.timeEnd('checking all markers');
 
 		cnMF.numDisplayed = unchanged + added;
 		//cnMF.reportData.numDisplayed = cnMF.numDisplayed;

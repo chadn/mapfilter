@@ -311,11 +311,12 @@ $(document).ready(function() {
 				$('.helpContainer').addClass('scrollPane');
 
 				$('#resultsDiv').addClass("winXP"); // to make jScrollpane have a winxp scrollbar - see mapFilter.css
+				
 				try {
-					
 					$('.scrollPane').jScrollPane(jScrollPaneInitOpitons); // add scroll pane
 				} catch (e) {
 					debug.log('jScrollPane error:', e.message, $('.scrollPane').get(0));
+					dumpError(e);
 				}
 				$('#calendarTitleContent').html( addCalForm() );
 			}
@@ -380,8 +381,8 @@ $(document).ready(function() {
 				+ '    </div>'
 				+ '</div>');
 
-			$('#rtSide').width( getRtSideWidth() );
-			$('#rtSide').height( $(window).height() - 100);
+			$('#rtSide').width( getRtSideWidth() ).height( getRtSideHeight() );
+			
 		
 			$('#gcmLogo').html("<h1><a href='http://chadnorwood.com/projects/gcm/' class='jumpLink' target='_blank' title='Click to view Google Calendar Map homepage in new window'>GCM</a></h1>");
 			// need to init resultsDiv and put MapStatus under resultsDataStatus
@@ -406,8 +407,11 @@ $(document).ready(function() {
 		}
 
 		function getRtSideWidth() {
-			// make rtSide a 1/3 the width of container, with a minimum of 200px
-			return $(window).width() > 600 ? Math.floor($(window).width()/3) : 200;
+			// make rtSide a 1/3 the width of container, with a minimum of 300px
+			return $(window).width() > 600 ? Math.floor($(window).width()/3) : 300;
+		}
+		function getRtSideHeight() {
+			return $(window).height() - 110;
 		}
 
 
@@ -507,7 +511,8 @@ $(document).ready(function() {
 
 		function resizeSlider(elemId) {
 			var sliderId = elemId; // + "Slider";
-			var sWidth = $('#rtSide').width() - $('#resultsDataStatus').width() - 10;
+			
+			var sWidth = getRtSideWidth() - $('#resultsDataStatus').width() - 10;
 			debug.log('resizeSlider():'+sWidth);
 			$('#'+sliderId).css({ 'width': sWidth });
 			$('.ui-slider-horizontal').css({ 'width': sWidth - 10 });
@@ -662,19 +667,23 @@ $(document).ready(function() {
 			initSlider('resultsDataFilters'); // resize then redraw sliders
 
 			// clear table and remove scroll pane in order to resize it properly
-		
 			//$('.scrollPane').jScrollPaneRemove();
-			updateResultsTable('ResultsMapEvents', true, true); // clear table hack for tablesorter
-			updateEventsContainerSize('#ResultsMapEventsTable'); // resize table
+			//updateResultsTable('ResultsMapEvents', true, true); // clear table hack for tablesorter
+			//updateEventsContainerSize('#ResultsMapEvents'); // resize table
 			// $('.scrollPane').jScrollPane(jScrollPaneInitOpitons); // add scroll pane
 
 			// since we cleared table, need repopulate it, too.
 			//updateResultsTable('ResultsMapEvents', true, false);
-			//updateResults();
+			
+			updateResults(); // this may be called again in mapRedraw
 
-			$('#rtSide').width( getRtSideWidth() );
+			$('#rtSide').width( getRtSideWidth() ).height( getRtSideHeight() );
 
 			mapRedraw(); // check to see if we need to add/delete markers and updateResults
+		}
+
+		function getRtSideLeftoverHeight() {
+			return getRtSideHeight() - ($('#titleDiv').height() + $('#resultsData').height() + $('#ResultsMapHdr').height());
 		}
 
 		function updateEventsContainerSize(eventsContainerSelector) {
@@ -685,10 +694,10 @@ $(document).ready(function() {
 			updating=true;
 
 			// we want rtSide height to be same as window height, not go over
-			otherHeight = $('#titleDiv').height() + $('#resultsData').height() + $('#ResultsMapHdr').height();
+			//otherHeight = $('#titleDiv').height() + $('#resultsData').height() + $('#ResultsMapHdr').height();
 
-			eventsContainerHeight = $('#rtSide').height() - 32 - otherHeight;
-			eventsContainerWidth = $('#rtSide').width() - 10;
+			eventsContainerHeight = getRtSideLeftoverHeight() - 2;
+			eventsContainerWidth = getRtSideWidth() - 15; // allow for Scroll bar
 			debug.log('updateEventsContainerSize('+eventsContainerSelector+') eventsContainerHeight:'+eventsContainerHeight+', eventsContainerWidth:'+eventsContainerWidth);
 			/*
 			$(eventsContainerSelector).css({ // TODO2:  set with width() and height()
@@ -704,6 +713,7 @@ $(document).ready(function() {
 		// updateResults should be called 
 		// - whenever height/width of results container changes
 		// - any time the number of visible events changes.
+		// this deletes and recreates results tables
 		function updateResults() {
 			$("#ResultsMapHdrNum").html(cnMF.numDisplayed);
 			//ht=$("#ResultsMapHdrNum").html();
@@ -718,22 +728,34 @@ $(document).ready(function() {
 			}
 			updateFilters();
 			
-			updateEventsContainerSize('#ResultsMapEvents');
+			//updateEventsContainerSize('#ResultsMapEvents');
+			$('#ResultsMapEvents')
+				.width( getRtSideWidth() )
+				.height(getRtSideLeftoverHeight() - 2);
+			
 			createResultsTable('ResultsMapEvents'); // this erases all html, including jScrollPane
+			
+			$('#ResultsMapEventsTable').width(getRtSideWidth()-15); //.height(getRtSideLeftoverHeight() - 4);
+			$('#ResultsMapEventsTable tbody').height(getRtSideLeftoverHeight() - 4);
 			//updateEventsContainerSize('#ResultsMapEventsTable');
 
-			$('#ResultsMapEventsTable').addClass("scrollPane");
-			$('#ResultsMapEvents').addClass("winXP"); // to make jScrollpane have a winxp scrollbar - see mapFilter.css
+			//$('#ResultsMapEventsTable').addClass("scrollPane");
+			//$('#ResultsMapEvents').addClass("winXP"); // to make jScrollpane have a winxp scrollbar - see mapFilter.css
 			
 			updateResultsTable('ResultsMapEvents', true, false);
+			//$('#ResultsMapEventsWrapper').height( $('#ResultsMapEventsTable').height() ); 
 			updateResultsTable('ResultsMapUnknownTable', false, false);
 
+			console.log("BEFORE jScrollPane() height, width = ", $('#ResultsMapEventsTable').height(), $('#ResultsMapEventsTable').width() );
 			try {
 				//$('.scrollPane').jScrollPaneRemove();
-				$('.scrollPane').jScrollPane(jScrollPaneInitOpitons);
+				//$('.scrollPane').jScrollPane(jScrollPaneInitOpitons);
 			} catch (e) {
 				debug.log('jScrollPane error:', e.message, $('.scrollPane').get(0));
+				dumpError(e);
+				
 			}
+			console.log("AFTER jScrollPane() height, width = ", $('#ResultsMapEventsTable').height(), $('#ResultsMapEventsTable').width() );
 		}
 
 		/*
@@ -1344,6 +1366,20 @@ $(document).ready(function() {
 			updateLoadingMap();
 			// $('#rightTab').click(); // close tab
 			
+		}
+		function dumpError(err) {
+			if (typeof err === 'object') {
+				if (err.message) {
+					console.log('\nMessage: ' + err.message)
+				}
+				if (err.stack) {
+					console.log('\nStacktrace:')
+					console.log('====================')
+					console.log(err.stack);
+				}
+			} else {
+				console.log('dumpError :: argument is not an object');
+			}
 		}
 
 
