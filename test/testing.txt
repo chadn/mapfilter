@@ -1,0 +1,15 @@
+This document is a very high level guide test guide to use when updating code
+
+
+Makers, Events:
+Load a calendar that has multiple events at the same address.
+Sort events table so you can see which events share address.
+Click on event in table,  marker should reveal infowindow with just that event.
+Close infowindow, then click on marker.  marker should reveal infowindow with multiple events info at bottom of infowindow. 
+Click on next/prev on infowindow.  event list should highlight corresponding event.
+Adjust date sliders to exclude one of the events from next/prev.  Note that nothing changes till you close infowindow, then events table is updated.
+Click on same marker again, infowindow should now not show event based on date slider
+
+Link:
+Load a calendar.  Zoom somewhere.  Change dates.  Get Link.
+

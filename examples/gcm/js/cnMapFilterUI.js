@@ -2,10 +2,10 @@
  * cnMapFilterUI
  *
  * User Interface for cnMapFilter, which allows user to
- * View data on a map and list, where the map filters the data,
+ * view data on a map and list, where the map filters the data,
  * only showing items that have coordinates/address on map's current display.
  *
- * requires cnMapFilter.js and jquery
+ * requires cnMapFilter.js and jquery 1.7+
  *
  * Usage: cnMFUI.init(options)
  *
@@ -312,9 +312,10 @@ $(document).ready(function() {
 
 				$('#resultsDiv').addClass("winXP"); // to make jScrollpane have a winxp scrollbar - see mapFilter.css
 				try {
+					
 					$('.scrollPane').jScrollPane(jScrollPaneInitOpitons); // add scroll pane
 				} catch (e) {
-					debug.log('jScrollPane error:', e.message);
+					debug.log('jScrollPane error:', e.message, $('.scrollPane').get(0));
 				}
 				$('#calendarTitleContent').html( addCalForm() );
 			}
@@ -619,12 +620,8 @@ $(document).ready(function() {
 
 			$.tablesorter.defaults.sortList = [[0,0]];
 			$.tablesorter.defaults.widthFixed = true;
-			createResultsTable('ResultsMapEvents', true);
 			createResultsTable('ResultsMapUnknownTable', false);
 
-			updateEventsContainerSize('#ResultsMapEventsTable');
-			$('#ResultsMapEventsTable').addClass("scrollPane");
-			$('#ResultsMapEvents').addClass("winXP"); // to make jScrollpane have a winxp scrollbar - see mapFilter.css
 
 			updateResults();
 
@@ -655,7 +652,7 @@ $(document).ready(function() {
 			});
 			*/
 			debug.log('infoWindowClosed, redrawing map');
-			$("a.event_table").removeClass("highlight2");
+			$(".highlight2").removeClass("highlight2");
 			mapRedraw();
 		}
 
@@ -666,17 +663,18 @@ $(document).ready(function() {
 
 			// clear table and remove scroll pane in order to resize it properly
 		
-			$('.scrollPane').jScrollPaneRemove();
-			updateResultsTable('ResultsMapEvents', true, true); // clear table
+			//$('.scrollPane').jScrollPaneRemove();
+			updateResultsTable('ResultsMapEvents', true, true); // clear table hack for tablesorter
 			updateEventsContainerSize('#ResultsMapEventsTable'); // resize table
-			$('.scrollPane').jScrollPane(jScrollPaneInitOpitons); // add scroll pane
+			// $('.scrollPane').jScrollPane(jScrollPaneInitOpitons); // add scroll pane
 
 			// since we cleared table, need repopulate it, too.
 			//updateResultsTable('ResultsMapEvents', true, false);
-			updateResults();
+			//updateResults();
 
-			// check to see if we need to add/delete markers
-			mapRedraw();
+			$('#rtSide').width( getRtSideWidth() );
+
+			mapRedraw(); // check to see if we need to add/delete markers and updateResults
 		}
 
 		function updateEventsContainerSize(eventsContainerSelector) {
@@ -689,21 +687,28 @@ $(document).ready(function() {
 			// we want rtSide height to be same as window height, not go over
 			otherHeight = $('#titleDiv').height() + $('#resultsData').height() + $('#ResultsMapHdr').height();
 
-			eventsContainerHeight = $(window).height() - 32 - otherHeight;
+			eventsContainerHeight = $('#rtSide').height() - 32 - otherHeight;
 			eventsContainerWidth = $('#rtSide').width() - 10;
 			debug.log('updateEventsContainerSize('+eventsContainerSelector+') eventsContainerHeight:'+eventsContainerHeight+', eventsContainerWidth:'+eventsContainerWidth);
-			$(eventsContainerSelector).css({
+			/*
+			$(eventsContainerSelector).css({ // TODO2:  set with width() and height()
 				'height': eventsContainerHeight,
 				'width': eventsContainerWidth
 			});
+			*/
+			$(eventsContainerSelector).width(eventsContainerWidth).height(eventsContainerHeight);
 
 			updating=false;
 		}
 
+		// updateResults should be called 
+		// - whenever height/width of results container changes
+		// - any time the number of visible events changes.
 		function updateResults() {
-		  	$("#ResultsMapHdrNum").html(cnMF.numDisplayed);
+			$("#ResultsMapHdrNum").html(cnMF.numDisplayed);
 			//ht=$("#ResultsMapHdrNum").html();
-		  	//debug.log('updateResults() cnMF.numDisplayed:', ht, cnMF.
+			//debug.log('updateResults() cnMF.numDisplayed:', ht, cnMF.
+			debug.timeEnd
 
 			if (cnMF.countUnknownAddresses() > 0) {
 				$("#ResultsMapHdrWarning span").html(cnMF.countUnknownAddresses());
@@ -712,13 +717,22 @@ $(document).ready(function() {
 				$("#ResultsMapHdrWarning").css('display','none'); // none: hide warning if no unknown addr
 			}
 			updateFilters();
+			
+			updateEventsContainerSize('#ResultsMapEvents');
+			createResultsTable('ResultsMapEvents'); // this erases all html, including jScrollPane
+			//updateEventsContainerSize('#ResultsMapEventsTable');
+
+			$('#ResultsMapEventsTable').addClass("scrollPane");
+			$('#ResultsMapEvents').addClass("winXP"); // to make jScrollpane have a winxp scrollbar - see mapFilter.css
+			
 			updateResultsTable('ResultsMapEvents', true, false);
 			updateResultsTable('ResultsMapUnknownTable', false, false);
 
 			try {
+				//$('.scrollPane').jScrollPaneRemove();
 				$('.scrollPane').jScrollPane(jScrollPaneInitOpitons);
 			} catch (e) {
-				debug.log('jScrollPane error:', e.message);
+				debug.log('jScrollPane error:', e.message, $('.scrollPane').get(0));
 			}
 		}
 
@@ -751,8 +765,8 @@ $(document).ready(function() {
 
 		}
 
-		function createResultsTable(divId, onlyValidCoords){
-			debug.warn("createResultsTable() ", divId, onlyValidCoords);
+		function createResultsTable(divId){
+			debug.warn("createResultsTable() ", divId);
 
 			// note: give table dummy tbody data or tablesorter gives "parsers is undefined" error
 			tableHtml = "<table id='"+divId+"Table' class='tablesorter'><thead><tr>"
@@ -799,7 +813,7 @@ $(document).ready(function() {
 
 
 		  		rowHTML += onlyValidCoords ? 
-					'<td><a class="actionable event_table" data-event_index="'+ kk.id +'" title="Click to show marker on map" style="display:block">'
+					'<td><a class="actionable event_table" data-event_index="'+ kk.id +'" title="Click to show marker on map">'
 						+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.name, 100, 0, '', 1)) + "</a></td>"
 					: '<td>'+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.name, 100, 0, '', 1)) + '</td>';
 
@@ -850,6 +864,9 @@ $(document).ready(function() {
 
 
 
+		// mapRedraw calls updateMarkers(), which compares map to markers and show/hides markers appropriately.
+		// if markers change, then event results table is updated as well
+		// Therefore this should be called anytime map changes (moves, zoom) or if filters change (date sliders)
 		function mapRedraw(skipUpdateStatus) {
 
 			if ((typeof redrawing == 'boolean') && redrawing) {
@@ -857,7 +874,7 @@ $(document).ready(function() {
 				return;
 			}
 			redrawing=true;
-			// debug.time('total mapRedraw');
+			debug.time('total mapRedraw');
 
 			if (cnMF.updateMarkers()) {
 			  debug.log("mapRedraw() updated markers, changes found");
@@ -867,8 +884,7 @@ $(document).ready(function() {
 			  debug.log("mapRedraw() updated markers - no changes, no updateResults()");
 			  updateFilters();
 			}
-			// debug.timeEnd('total mapRedraw');
-			$('#rtSide').width( getRtSideWidth() );
+			debug.timeEnd('total mapRedraw');
 
 
 			// todo: don't update status every map redraw. then we can call mapRedraw during geocoding, but
@@ -877,14 +893,14 @@ $(document).ready(function() {
 			if (!skipUpdateStatus) updateStatus('');
 
 			//sleep(2000);
-			mapChanged();
+			mapChangedCallback();
 			//updateSizes();
 			redrawing=false;
 		}
 
 
 		  // TODO - chad - move to index.html as callback function
-		function mapChanged() {
+		function mapChangedCallback() {
 			if (cnMFUI.opts.mapChangeCallback) cnMFUI.opts.mapChangeCallback({
 			  mapZoom: myGmap.getZoom(),
 			  mapType: getMapType(myGmap),
@@ -909,7 +925,7 @@ $(document).ready(function() {
 
 
 
-		  // Insert Jump Box (aka goto address)
+		// Insert Jump Box (aka goto address)
 		function mapJumpBox() {
 
 			var info=document.createElement('div');
@@ -1006,8 +1022,8 @@ $(document).ready(function() {
 			- make event list move to highlighted event (jscrollpane - update css: top)
 			*/
 			// remove any previous highlights and highlight new ones
+			$(".highlight2").removeClass("highlight2");
 			$("a.event_table").each(function(){
-				$(this).removeClass("highlight2");
 				for (var ii=0; ii < eventIds.length; ii++) {
 					if ($(this).data('event_index') == eventIds[ii]) {
 						debug.log("highlightEvent found event id: "+ eventIds[ii]);
@@ -1498,7 +1514,7 @@ $(document).ready(function() {
 		myGmap.setCenter( cnMF.eventList[id].getGoogleMarker().getPosition() );
 		myGmap.setZoom(newZoom);
 		
-		//mapChanged();
+		//mapChangedCallback();
 	},
 
 	jumpToAddress: function(address) {

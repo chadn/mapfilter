@@ -3,7 +3,7 @@
  * and GPL (http://www.opensource.org/licenses/gpl-license.php) licenses.
  * 
  * See http://kelvinluck.com/assets/jquery/jScrollPane/
- * $Id: jScrollPane.js 90 2010-01-25 03:52:10Z kelvin.luck $
+ * $Id: jScrollPane.js 93 2010-06-01 08:17:28Z kelvin.luck $
  */
 
 /**
@@ -343,7 +343,7 @@ $.fn.jScrollPane = function(settings)
 				{
 					initDrag();
 					dragMiddle = getPos(event, 'Y') - dragPosition - currentOffset.top;
-					$('html').bind('mouseup', onStopDrag).bind('mousemove', updateScroll);
+					$('html').bind('mouseup', onStopDrag).bind('mousemove', updateScroll).bind('mouseleave', onStopDrag)
 					if ($.browser.msie) {
 						$('html').bind('dragstart', ignoreNativeDrag).bind('selectstart', ignoreNativeDrag);
 					}
@@ -498,9 +498,14 @@ $.fn.jScrollPane = function(settings)
 						// of the focused element to the top of the scrollpane...
 						var eleTop = 0;
 						
+						var preventInfiniteLoop = 100;
+						
 						while ($e[0] != $this[0]) {
 							eleTop += $e.position().top;
 							$e = $e.offsetParent();
+							if (!preventInfiniteLoop--) {
+								return;
+							}
 						}
 						
 						var viewportTop = -parseInt($pane.css('top')) || 0;

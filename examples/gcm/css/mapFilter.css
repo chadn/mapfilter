@@ -6,6 +6,7 @@
  * Main
  *     Map
  *     GCM
+ * Popups
  * Plugins 
  *     tablesorter
  *     jScrollPane
@@ -25,6 +26,17 @@ body {
  
 /*
  *  Main | Map
+ */
+/*
+ * Google colors
+ * ocean blue: #99B3CC
+ * icon blue: #307BC2
+ * forrest green: #B5D29C
+ * highway exit green: #41A774
+ * orange highway: #FFC345
+ * yellow road: #FFFD8B
+ * grey city block: #EDEAE2
+ * orange-brown buidling: #DED2AC
  */
 
 #map_id { 
@@ -101,6 +113,150 @@ body {
 }
 
 
+.ui-slider .ui-slider-handle {
+	width: 34px;
+	height: 25px;
+	padding: 2px;
+	top: -10px;
+	margin-left: 0;  /* reset horizontal handle offset */
+	margin-bottom: 0; /* reset vertical handle offset */
+	border: 1px solid #2E6E9E;
+	color: #2E6E9E;
+	text-align: center;
+	font-size: 9px;
+}
+.ui-slider-horizontal {
+	/* set dynamically - width: 300px; */
+}
+.ui-slider-range {
+	background: #6699EE;
+}
+
+#titleDiv {
+	overflow:auto;
+	padding-right: 100px; /* match gcmLogo width */
+	background-color: #B5D29C;
+
+}
+#titleDiv div {
+}
+
+#calendarTitle, 
+#resultsDataFilters {
+	position: relative;
+	float: left;
+	padding: 0;
+	/*background-color: #ECECE2;*/
+	height: auto;
+	font-size: 12px;
+	text-align: left;
+	width: 100%;
+	background-color: #FFFFFF;
+
+}
+#calendarTitleContent {
+	padding: 5px;	
+}
+#calendarTitle h3 {
+	font-size: 24px;
+	margin: 5px 5px 2px 5px;
+	margin: 0;
+	text-align: left;
+}
+#calendarTitle h4 {
+	font-size: 24px;
+	margin: 5px 5px 2px 5px;
+	margin: 0;
+	text-align: left;
+}
+#calendarTitle span {
+	font-size: 12px;
+	margin: 1px 5px 5px 5px;
+	margin: 0;
+	text-align: left;
+}
+#gcmLogo, 
+#resultsDataStatus {
+	position: relative;
+	float:right;
+	width: 100px;       /* match parent titleDiv's padding-right */
+	margin-right: -100px;/* match parent titleDiv's padding-right */
+	height: 60px;
+	/*background-color: #AACCDD;*/
+	/*color: #2E6E9E;*/
+	text-align: center;
+	background-color: #B5D29C;
+}
+
+#gcmLogo h1 {
+	font-size: 36px;
+	font-weight: bold;
+	margin: 0;
+}
+#resultsData {
+	overflow:auto;
+	padding-right: 100px; /* match gcmLogo width */	
+}
+#resultsDataFilters {
+	/*background-color: #E6EEEE;*/
+	position: relative;
+	float: left;
+}	
+#resultsDataStatus {
+	height: auto;
+	position: relative;
+	float: left;
+	text-align:center;
+	/*background-color: #CCCCDD;*/
+	background-color: #B5D29C;	
+}
+#ResultsMapHdr {
+	padding: 2px 5px;	
+}
+.jumpLink {
+	color: #0085D0;
+	color: #0045CC;
+	text-decoration: none;
+}
+.actionable {
+	color: #005599;
+	text-decoration: none;
+}
+.actionable:hover,
+.jumpLink:hover {
+	text-decoration: underline;
+}
+
+.helpContainer {
+	overflow: auto;
+}
+.helpContainer h3 {
+	padding-left: 5px;
+}
+
+#ResultsMapEvents {
+	overflow:hidden;
+}
+.event_table {
+	display:block;
+}
+.highlight2 { 
+	font: bold;
+	background: #FFFD8B; 
+	color: #555555; 
+}
+
+/*
+ *  Popups
+ */
+
+#newDates {
+	display:none;
+	overflow: hidden;
+	/* width set in dialogDates in js */
+	text-align:left;
+}
+
 
 /*
  *  Plugins | tablesorter
@@ -157,6 +313,20 @@ table.tablesorter {margin: 0 0 0 0;}
   *  note - if osX is used, like this
   *		$('#pane2').jScrollPane({showArrows:true, scrollbarWidth: 15, arrowSize: 16});
   */
+
+.scrollPane {
+  height: auto;
+  overflow: visible;
+  background: #EEEEEE;
+  float: left;
+  text-align:left;
+  position:absolute;
+}
+
+.jScrollPaneContainer {
+	border: 5px solid #9999CC;
+}
+
 .winXP .jScrollPaneTrack {
 	background: url(../img/windows_track.gif) repeat-y;
 }
