@@ -75,20 +75,6 @@ $(document).ready(function() {
 			return results[1];
 	}
 
-	function validateDate_DELME(httpParamName, def) {
-			var offset = httpGetParam(httpParamName); 
-			offset = parseInt(offset);
-			if (isNaN(offset)) {
-				offset = def;
-			}
-			var date = new Date();
-			date.setDate(date.getDate()+offset);
-			var month = date.getMonth() + 1;
-			var day = date.getDate();
-			var year = date.getFullYear();
-			return year + "-" + month + "-" + day;
-	}
-
 	function validateFloat(httpParamName, min, max, def) {
 			var value = httpGetParam(httpParamName); 
 			value = parseFloat(value);
@@ -343,10 +329,11 @@ $(document).ready(function() {
 				});
 			}
 			if (cnMFUI.opts.gCalEmails) { // gc=xxx@groups.calendar.google.com,yyy@my.domain.com
+				if (!cnMFUI.opts.gCalEmails.match(/@/)) {
+					// decodeURIComponent() does not handle + to spaces, we want to drop spaces
+					cnMFUI.opts.gCalEmails = decodeURIComponent((cnMFUI.opts.gCalEmails+'').replace(/\+/g, '')); // %40 to '@'
+				}
 				$.each(cnMFUI.opts.gCalEmails.split(','), function(index, value) {
-					if (!value.match(/@/)) {
-						value = value.replace(/%40/,'@');
-					}
 					calendarURLs.push("https://www.google.com/calendar/feeds/"+ value + "/public/basic");
 				});
 			}

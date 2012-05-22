@@ -47,42 +47,49 @@
 		<h3>What is this?</h3>
 		<ol>
 Google Calendar Map (GCM) puts all events with a location from a google calendar on to a google map.  The map is a filter, You can
- zoom in and move map around to only view events that occur on the map as you see it.
+ zoom in and move map around to only view events that occur on the map as you see it.  Additionally, you can use the date sliders to further filter events.
 		</ol>
 		<ol>
-Click on the big GCM in the top right view the <a href="http://chadnorwood.com/projects/gcm/">GCM Homepage</a> with more information.
+Click on the big GCM in the top right view the <a href="http://chadnorwood.com/projects/gcm/">GCM Homepage</a> with more information.  
+Click on - above GCM to hide this drawer, Click again to open it.
 		</ol>
 	    <h3>Example Calendars:</h3>
 		<ol>
-			<li><a class="actionable" href="?ed=180&u=https://www.google.com/calendar/feeds/dnr6osjdrtn4fqpf70ep8ck1rc%40group.calendar.google.com/public/basic">Chad's Chicago: Summer Festivals and More</a></li>
-			<li><a class="actionable" href="?u=http://www.google.com/calendar/feeds/jo0ubvoi1gutr95kdtl1245u3g@group.calendar.google.com/public/basic">A New York Track Club</a><br></li>
-			<li><a class="actionable" href="?u=https://www.google.com/calendar/feeds/webdog6@gmail.com/public/basic">Sunset District Events Calendar (San Francisco)</a></li>
-			<li><a class="actionable" href="?u=https://www.google.com/calendar/feeds/yvettebikesfortheworld@gmail.com/public/basic">Collections (Bikes For The World)</a></li>
-			<li><a class="actionable" href="?u=http://www.google.com/calendar/feeds/asa5k2phscdna68j9e5410v6mc@group.calendar.google.com/public/basic">Trail Races</a></li>
+			<li><a class="actionable" href="?gc=asa5k2phscdna68j9e5410v6mc@group.calendar.google.com">Trail Races (Canada)</a></li>
+			<li><a class="actionable" href="?ed=180&gc=dnr6osjdrtn4fqpf70ep8ck1rc%40group.calendar.google.com">Chad's Chicago: Summer Festivals and More</a></li>
+			<li><a class="actionable" href="?gc=jo0ubvoi1gutr95kdtl1245u3g@group.calendar.google.com">A New York Track Club</a><br></li>
+			<li><a class="actionable" href="?gc=webdog6@gmail.com">Sunset District Events Calendar (San Francisco)</a></li>
+			<li><a class="actionable" href="?gc=yvettebikesfortheworld@gmail.com">Collections (Bikes For The World)</a></li>
 			<li><a class="actionable" href="?ed=21&gc=webdog6@gmail.com,yvettebikesfortheworld@gmail.com,jo0ubvoi1gutr95kdtl1245u3g@group.calendar.google.com,dnr6osjdrtn4fqpf70ep8ck1rc@group.calendar.google.com,asa5k2phscdna68j9e5410v6mc@group.calendar.google.com">All 5 calendars above at once!</a> &lt;--- NEW !!! </li>
+			<!-- 
+			<li><a class="actionable" href="?ed=180&gc=m76pvgknm3n2st5l0nov1ei4gb0atipa@import.calendar.google.com">Chicago Beer Geeks</a></li>
 			<li><a class="actionable" href="?ed=180&u=https://www.google.com/calendar/feeds/edbd7jqqu7s83ndvv276mueeig%40group.calendar.google.com/public/basic">Aikido</a></li>
 			<li><a class="actionable" href="?ed=180&u=https://www.google.com/calendar/feeds/0ei0284so407vu24o7o0q5ares%40group.calendar.google.com/public/basic">Test</a></li>
+			-->
 		</ol>
 
 		<h3>How do I make it Go?</h3>
-		<ol>First, make your calendar public (if it ain't your calendar, ask owner for XML feed URL).</ol>
+		<ol>First, make your calendar public (if it ain't your calendar, ask owner to do it).</ol>
 		<ol>
-			<li> In the Google Calendar interface, locate "My Calendar" box on the left.
-			<li>  Click the arrow next to the calendar you need.
-			<li>  A menu will appear. Click "Share this calendar"
-			<li>  Check "Make this calendar public"
-			<li>  Make sure "Share only my free/busy information" is unchecked.
-			<li>  Click "Save"
+			<li> In the Google Calendar interface, locate "My Calendars" or "Other Calendars" lists on the left.</li>
+			<li> Hover over desired calendar, and click the arrow the appears. A menu will appear.</li>
+			<li> Click "Share this calendar"</li>
+			<li> Check "Make this calendar public"</li>
+			<li> Make sure "Share only my free/busy information" is unchecked.</li>
+			<li> Click "Save"</li>
 		</ol>
-		<ol>Second, find your calendar's XML feed URL</ol>
+		<ol>Second, find your Calendar's ID</ol>
 		<ol>
-			<li>  In the Google Calendar interface, locate the "My Calendar" box on the left
-			<li>  Click the arrow next to the calendar you need.
-			<li>  A menu will appear. Click "Calendar settings"
-			<li>  In the "Calendar Address" section of the screen, click the XML badge.
-			<li>  Your feed's URL will appear. Copy It
+			<li> In the Google Calendar interface, locate "My Calendars" or "Other Calendars" lists on the left.</li>
+			<li> Hover over desired calendar, and click the arrow the appears. A menu will appear.</li>
+			<li> Click "Calendar settings"</li>
+			<li> Look at the "Calendar Address" section of the screen, near XML, ICAL, HTML icons. </li>
+			<li> Copy string after "Calendar ID:" - it may be your email, or may look like vf3u7s6odj0r74q4lrnb730phk@group.calendar.google.com</li>
+			<li> NOTE: the calendar ID can also be extracted from the XML Feed.  For example, xxxx@group.calendar.google.com is the id for this XML Feed: 
+				https://www.google.com/calendar/feeds/xxxx@group.calendar.google.com/public/basic</li>
 		</ol>
-		<ol>Third, Paste the URL of your Google Calendar XML Feed in the box above, click "Add Cal"</ol>
+		<ol>Third, Paste the Google Calendar ID in the box above.  Optionally add more Calendar IDs, separated by spaces. Click "Add Cal"</ol>
+		<p>.</p>
 	</div>
 </div>
 
