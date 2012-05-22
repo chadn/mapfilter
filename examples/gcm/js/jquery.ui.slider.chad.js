@@ -763,7 +763,7 @@ $.widget( "ui.sliderChad", $.ui.mouse, {
 
 });
 
-$.extend( $.ui.slider, {
+$.extend( $.ui.sliderChad, {
 	version: "1.8.1"
 });
 

@@ -96,6 +96,7 @@ body {
 	position:absolute;
 	top:70px;
 	right:0;
+	margin-right:0;
 	background: #99B3CC;
 	overflow:hidden;
 	z-index:2;

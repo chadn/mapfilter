@@ -951,7 +951,8 @@
 
 	};
 	(function(){
-		console.log("LOADED GeocodeManager")
+		// TODO: separate geocode manager out 
+		//console.log("LOADED GeocodeManager")
 	})();
 	
 

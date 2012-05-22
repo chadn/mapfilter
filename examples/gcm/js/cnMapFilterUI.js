@@ -243,8 +243,8 @@ $(document).ready(function() {
 			var timezone = jstz.determine_timezone(); // https://bitbucket.org/pellepim/jstimezonedetect/wiki/Home
 			var calendarURLs = getCalendarURLs();
 			debug.log('mapfilter().init(), cnMF:',cnMF);
-			initDivs();
 			myGmap = initGMap();
+			initDivs();
 			mapJumpBox(); 
 			mapRightTab(cnMFUI.opts.mapId);
 			
@@ -307,17 +307,8 @@ $(document).ready(function() {
 				//$('#resultsDiv').html("<div id='resultsDivHelp'>"+ $("#myHelp").html() +"</div>");
 				//$('#resultsDivHelp').addClass('scrollPane');
 				$('#resultsDiv').html( $("#myHelp").html() );
-				updateEventsContainerSize('.helpContainer'); // resize help
-				$('.helpContainer').addClass('scrollPane');
-
-				$('#resultsDiv').addClass("winXP"); // to make jScrollpane have a winxp scrollbar - see mapFilter.css
+				updateEventsContainerSize('.helpContainer'); // resize help TODO
 				
-				try {
-					$('.scrollPane').jScrollPane(jScrollPaneInitOpitons); // add scroll pane
-				} catch (e) {
-					debug.log('jScrollPane error:', e.message, $('.scrollPane').get(0));
-					dumpError(e);
-				}
 				$('#calendarTitleContent').html( addCalForm() );
 			}
 
@@ -364,7 +355,7 @@ $(document).ready(function() {
 		}
 	
 		function initDivs() {
-		  	$('body').append(
+			$('#'+ cnMFUI.opts.mapId).append(
 				  '<div id="rtSide">'
 				+ '    <div id="titleDiv">'
 				+ '        <div id="calendarTitle"><div id="calendarTitleContent"></div></div>'
@@ -430,8 +421,8 @@ $(document).ready(function() {
 		}
 		function addCalForm() {
 		  	return  "<form action='"+window.location.pathname+"' method='get' id='xmlForm'><p>\n"
-				  + "<span><input id='xmlurl' name='u' value='http://' size='25' class='required' minlength='2' /></span>"
-				  + "<span><input type='submit' id='asubmit' value='Add Cal'></span>\n"
+				  + "<span><input id='xmlurl' name='gc' value='' size='25' class='required' minlength='2' /></span>"
+				  + "<span><input type='submit' id='asubmit' value='Add Calendar'></span>\n"
 				  + "</form>";
 		}
 
@@ -467,7 +458,7 @@ $(document).ready(function() {
 			var sliderId = elemId + "Slider";
 			var sHandleTxt = 'title="Click and drag to instantly filter by dates"';
 
-		  	html = '<br clear="all"><div id="'+sliderId+'" class="slider myslider ui-slider ui-slider-horizontal ui-widget ui-widget-content ui-corner-all">'
+			var html = '<br clear="all"><div id="'+sliderId+'" class="slider myslider ui-slider ui-slider-horizontal ui-widget ui-widget-content ui-corner-all">'
 			  + '<div id="'+sliderId+'1" '+sHandleTxt+' class="jumpLink my_slider_handle ui-slider-handle ui-state-default ui-corner-all" style="left: 0%;" ></div>'
 			  + '<div id="'+sliderId+'2" '+sHandleTxt+' class="jumpLink my_slider_handle ui-slider-handle ui-state-default ui-corner-all" style="left: 100%;"></div>'
 			  //+ '<div style="left: 19%; width: 81%;" class="ui-slider-range ui-widget-header"></div>'
@@ -479,7 +470,8 @@ $(document).ready(function() {
 			// http://dev.jqueryui.com/ticket/3467
 			// example of not overlapping - kayak - and mootools
 			// http://developer.expressionz.in/downloads/mootools_double_pinned_slider_with_clipped_gutter_image_v2.2/slider_using_mootols_1.2.html
-			$('#'+sliderId).sliderChad( {
+			debug.log("jQuery.browser.version ", jQuery.browser.version);
+			var sliderOptions = {
 				range:true,
 				min: cnMF.origStartDay,
 				max: cnMF.origEndDay,
@@ -500,7 +492,12 @@ $(document).ready(function() {
 					cnMF.showDays(j.values[0], j.values[1]);
 					//updateResults();
 				}
-			});
+			};
+			if (jQuery.browser.msie && jQuery.browser.version == '9.0') {
+				$('#'+sliderId).slider( sliderOptions);
+			} else {
+				$('#'+sliderId).sliderChad( sliderOptions);
+			}
 			$('#'+ sliderId+'1').html(sliderDate(cnMF.origStartDay));
 			$('#'+ sliderId+'2').html(sliderDate(cnMF.origEndDay));
 			/*
@@ -526,14 +523,18 @@ $(document).ready(function() {
 		}
 
 		function updateSlider(elemId){
-	  		debug.log('******** updateSlider('+elemId+') '+cnMF.curStartDay, cnMF.curEndDay, cnMF);
+			debug.log('updateSlider('+elemId+') '+cnMF.curStartDay, cnMF.curEndDay, cnMF);
 
 			sliderId = elemId + "Slider";
-			$('#'+sliderId).sliderChad("option", "values", [cnMF.curStartDay,cnMF.curEndDay]);
-	  		debug.log('******** updateSlider('+elemId+') VALUES UPDATED ');
+			if (jQuery.browser.msie && jQuery.browser.version == '9.0') {
+				$('#'+sliderId).slider("option", "values", [cnMF.curStartDay,cnMF.curEndDay]);
+			} else {
+				$('#'+sliderId).sliderChad("option", "values", [cnMF.curStartDay,cnMF.curEndDay]);
+			}
+			//debug.log('******** updateSlider('+elemId+') VALUES UPDATED ');
 			$('#'+ sliderId+'1').html(sliderDate(cnMF.curStartDay));
 			$('#'+ sliderId+'2').html(sliderDate(cnMF.curEndDay));
-	  		debug.log('******** updateSlider('+elemId+') COMPLETE ');
+			//debug.log('******** updateSlider('+elemId+') COMPLETE ');
 		}
 
 		function date2days(date) {
@@ -559,14 +560,14 @@ $(document).ready(function() {
 		 		msDiff = dateObj.getTime() - now.getTime();
 		 		return Math.round(msDiff / (24*3600*1000));
 		 	}
-		 	debug.log('******** date2days('+date+') invalid date format !!!!!!!!!!!! TODO !!!!');
+		 	debug.warn(' date2days('+date+') invalid date format !!!!!!!!!!!! TODO !!!!');
 		 	return 0;
 		}
 
 		function days2date(nDays) {
 			var day = new Date();
 			day.setTime(day.getTime() + nDays*24*3600*1000);
-	  		debug.log('******** days2date('+nDays+') '+ cnMF.formatDate(day, 'Y-m-L'));
+	  		//debug.log('******** days2date('+nDays+') '+ cnMF.formatDate(day, 'Y-m-L'));
 		  	return cnMF.formatDate(day, 'Y-m-L');
 		}
 		function sliderDate(nDays) {
@@ -718,7 +719,6 @@ $(document).ready(function() {
 			$("#ResultsMapHdrNum").html(cnMF.numDisplayed);
 			//ht=$("#ResultsMapHdrNum").html();
 			//debug.log('updateResults() cnMF.numDisplayed:', ht, cnMF.
-			debug.timeEnd
 
 			if (cnMF.countUnknownAddresses() > 0) {
 				$("#ResultsMapHdrWarning span").html(cnMF.countUnknownAddresses());
@@ -739,23 +739,9 @@ $(document).ready(function() {
 			$('#ResultsMapEventsTable tbody').height(getRtSideLeftoverHeight() - 4);
 			//updateEventsContainerSize('#ResultsMapEventsTable');
 
-			//$('#ResultsMapEventsTable').addClass("scrollPane");
-			//$('#ResultsMapEvents').addClass("winXP"); // to make jScrollpane have a winxp scrollbar - see mapFilter.css
-			
 			updateResultsTable('ResultsMapEvents', true, false);
 			//$('#ResultsMapEventsWrapper').height( $('#ResultsMapEventsTable').height() ); 
 			updateResultsTable('ResultsMapUnknownTable', false, false);
-
-			console.log("BEFORE jScrollPane() height, width = ", $('#ResultsMapEventsTable').height(), $('#ResultsMapEventsTable').width() );
-			try {
-				//$('.scrollPane').jScrollPaneRemove();
-				//$('.scrollPane').jScrollPane(jScrollPaneInitOpitons);
-			} catch (e) {
-				debug.log('jScrollPane error:', e.message, $('.scrollPane').get(0));
-				dumpError(e);
-				
-			}
-			console.log("AFTER jScrollPane() height, width = ", $('#ResultsMapEventsTable').height(), $('#ResultsMapEventsTable').width() );
 		}
 
 		/*
@@ -764,7 +750,7 @@ $(document).ready(function() {
 		 * (2) when infowindow is open, don't redraw map, don't update results, don't display "Filtered by MAP"
 		 */
 		function updateFilters() {
-			debug.log('updateFilters() cnMF.filteredByDate is ', cnMF.filteredByDate);
+			//debug.log('updateFilters() cnMF.filteredByDate is ', cnMF.filteredByDate);
 			if (cnMF.filteredByDate) {
 				$("#ResultsMapHdrFilterByDate").css('display','inline');
 			} else {
@@ -773,12 +759,11 @@ $(document).ready(function() {
 			if (cnMF.myMarkers.infoWindowIsOpen()) {
 				$("#ResultsMapHdrFilterByMap").css('display','none');
 				$("#ResultsMapHdrFilterFrozen").css('display','inline');
-					debug.log('updateFilters() InfoWindow is showing');
+				debug.log('updateFilters() InfoWindow is showing, not updating based on map changes');
 			} else {
 				$("#ResultsMapHdrFilterFrozen").css('display','none');
-				debug.log('updateFilters() cnMF.filteredByMap is '+ cnMF.filteredByMap);
+				//debug.log('updateFilters() cnMF.filteredByMap is '+ cnMF.filteredByMap);
 				if (cnMF.filteredByMap) {
-				//if (cnMF.numDisplayed == cnMF.countKnownAddresses())
 					$("#ResultsMapHdrFilterByMap").css('display','inline');
 				} else {
 					$("#ResultsMapHdrFilterByMap").css('display','none');
@@ -798,7 +783,7 @@ $(document).ready(function() {
 					+ "<th title='Click to Sort by Event Location'>Where</th>"
 					+ "</tr></thead><tbody><tr>"+emptyTableHtml+"</tr></tbody></table>";
 			pagerHtml = "<div id='"+divId+"Pager'>"+$("#pager").html()+"</div>";
-			pagerHtml = '';
+			pagerHtml = '<p> Thats All!</p>';
 			$('#' + divId).html(tableHtml+pagerHtml);
 
 			//$('#' + divId +"Pager .pagesize").val(cnMFUI.opts.numTableRows); // rows in table
@@ -818,41 +803,44 @@ $(document).ready(function() {
 
 		function updateResultsTable(divId, onlyValidCoords, clearTable){
 			var rowHTML = '';
-		  	for (var i in cnMF.eventList) {
+			for (var i in cnMF.eventList) {
 				if (clearTable)
 					continue;
-		  		var kk = cnMF.eventList[i];
-		  		if (onlyValidCoords && !kk.isDisplayed)
-		  			continue;
-		  		if (!onlyValidCoords && kk.validCoords)
-		  			continue;
+				var kk = cnMF.eventList[i];
+				if (onlyValidCoords && !kk.isDisplayed)
+					continue;
+				if (!onlyValidCoords && kk.validCoords)
+					continue;
 
-		  		rowHTML += "<tr>";
-				rowHTML += "<td>" + cnMF.formatDate(kk.dateStart, 'Y-m-L d H:i') + "</td>";
+				rowHTML += "<tr>";
+				//rowHTML += "<td>" + cnMF.formatDate(kk.dateStart, 'Y-m-L d H:i') + "</td>";
+				rowHTML += "<td>" + cnMF.formatDate(kk.dateStart, 'Y-m-L d g:ia') + "</td>";
 				//rowHTML += "<td>" + cnMF.formatDate(kk.dateStart, 'm/D  g:i a d') + "</td>";
-		  		// TODO: use this and/or custom sort http://tablesorter.com/docs/example-meta-parsers.html
+				// TODO: use this and/or custom sort http://tablesorter.com/docs/example-meta-parsers.html
 				// rowHTML += "<td>" + cnMF.formatDate(kk.dateStart, 'm/D d g:ia') + "</td>";
 
 
-		  		rowHTML += onlyValidCoords ? 
+				rowHTML += onlyValidCoords ? 
 					'<td><a class="actionable event_table" data-event_index="'+ kk.id +'" title="Click to show marker on map">'
-						+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.name, 100, 0, '', 1)) + "</a></td>"
+					+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.name, 100, 0, '', 1)) + "</a></td>"
 					: '<td>'+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.name, 100, 0, '', 1)) + '</td>';
 
-		  		rowHTML += "<td>[<a href='" + kk.url + "' class='jumpLink' title='Click to view Calendar Event Web Page in new window' target='_blank'>Event Details</a>] "
-						+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.desc, 140, 0, '', 1)) + "</td>";
+				rowHTML += "<td>[<a href='" + kk.url + "' class='jumpLink' title='Click to view Calendar Event Web Page in new window'"
+					+" target='_blank'>Event Details</a>] "
+					+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.desc, 140, 0, '', 1)) + "</td>";
 
-		  		rowHTML += onlyValidCoords ? '<td>' + kk.addrFromGoogle + ' (<a class="actionable" href="javascript:void(0)" title="' 
-						+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.addrOrig, 100, 0, '', 0)) + '">orig</a>)</td>'
+				rowHTML += onlyValidCoords ? '<td>' + kk.addrFromGoogle + ' (<a class="actionable" href="javascript:void(0)" title="' 
+					+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.addrOrig, 100, 0, '', 0)) + '">orig</a>)</td>'
 					: '<td>'+(kk.addrOrig.match(/\w/) ? kk.addrOrig : '[empty]' )
-					  +'<br><a href="' + kk.url + '" title="Click to edit this event (if you have permission) in a new window" target="_blank">Edit Event Address</a><br>Error: ' + kk.error + '</td>';
-		  		rowHTML += "</tr>\n";
-		  	}
+					+'<br><a href="' + kk.url + '" title="Click to edit this event (if you have permission) in a new window"'
+					+' target="_blank">Edit Event Address</a><br>Error: ' + kk.error + '</td>';
+				rowHTML += "</tr>\n";
+			}
 
 			// empty tbody triggers "parsers is undefined" error from tablesorter
 			if (rowHTML == '') {
 				rowHTML = '<tr>'+emptyTableHtml+ '</tr>';
-			  	$("#" + divId + "Table tbody").html(rowHTML);
+				$("#" + divId + "Table tbody").html(rowHTML);
 				return;
 			}
 		  	$("#" + divId + "Table tbody").html(rowHTML);
@@ -970,21 +958,20 @@ $(document).ready(function() {
 		function mapRightTab(mapId) {
 			$('#'+mapId).append("<a id='rightTab' title='Click to show/hide GCM Panel'>-</a>");
 			$('#rightTab').click(function(){
-				var durationMs = 400;
-				debug.log("mapRightTab() rtSide').width: ", $('#rtSide').width() );
-				if ($('#rtSide').width() < 1) {
-					$('#rightTab').html('-');
-					$('#rtSide').animate({
-						width : getRtSideWidth() + 'px'
-					}, durationMs, 'linear');
-				} else {
+				var durationMs = 300;
+				var marginRight = $('#rtSide').css('margin-right');
+				// $('#rtSide').width()
+				debug.log("mapRightTab() rtSide').marginRight: ", marginRight );
+				if (marginRight == '0px') {
 					$('#rightTab').html('+');
 					$('#rtSide').animate({
-						width : 0
-					}, durationMs, 'linear', function(){
-						//$('#map_id').css('width','100%');
-					});
-				
+						'margin-right' : '-'+ getRtSideWidth() + 'px'
+					}, durationMs, 'linear');
+				} else {
+					$('#rightTab').html('-');
+					$('#rtSide').animate({
+						'margin-right' : '0px'
+					}, durationMs, 'linear');
 				}
 			});
 		}
@@ -1368,18 +1355,19 @@ $(document).ready(function() {
 			
 		}
 		function dumpError(err) {
+			var msg = '';
 			if (typeof err === 'object') {
 				if (err.message) {
-					console.log('\nMessage: ' + err.message)
+					msg += '\nMessage: ' + err.message;
 				}
 				if (err.stack) {
-					console.log('\nStacktrace:')
-					console.log('====================')
-					console.log(err.stack);
+					msg += '\nStacktrace:';
+					msg += '\n====================\n'+ err.stack;
 				}
 			} else {
-				console.log('dumpError :: argument is not an object');
+				msg += 'dumpError :: argument is not an object';
 			}
+			
 		}
 
 
