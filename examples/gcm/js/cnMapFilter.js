@@ -18,9 +18,10 @@
 	// ba-debug.js - use debug.log() instead of console.log()
 	// debug.setLevel(0) turns off logging,
 	// 1 is just errors and timers
-	// 2 includes warnings
-	// 3 includes info - logs external data (calendar)
-	// 9 is everything (log, info, warn, error)
+	// 2 includes warn - these are things that should probably not happen, but nothing breaks if they do
+	// 3 includes info - tracks user initiated clicks, etc. Does not include google maps zoom, drags, etc.
+	// 4 includes debug - network related and key data (fetching calendar data, geocoding, etc)
+	// 5+ includes log, which can be anything
 	var lvl = window.location.href.match(/\bdebuglevel=(\d)/i);
 	if (lvl && lvl[1]) {
 		debug && debug.setLevel(parseInt(lvl[1],10));
@@ -151,7 +152,7 @@
 			return this.allMarkers[cnMF.eventList[coordsStrOrEvent].getCoordsStr()]; // coordsStrOrEvent = event index
 
 		} else {
-			debug.warn("getMarkerObj(): only accept event obj or coords string, not: ", typeof coordsStrOrEvent, coordsStrOrEvent);
+			debug.warn("**** getMarkerObj(): only accept event obj or coords string, not: ", typeof coordsStrOrEvent, coordsStrOrEvent);
 			return null;
 		}
 	}
@@ -474,7 +475,7 @@
 		cnMF.numDisplayed = unchanged + added;
 		//cnMF.reportData.numDisplayed = cnMF.numDisplayed;
 
-		debug.info("updateMarkers() "+removed+" removed, "+added+" added, "+unchanged+" unchanged, "
+		debug.debug(" updateMarkers() "+removed+" removed, "+added+" added, "+unchanged+" unchanged, "
 		+cnMF.numDisplayed+" total ");
 
 		return (removed || added);
@@ -495,7 +496,7 @@
 
 	cnMF.getGCalData = function(gCalUrl, startDays, endDays, callbacks ) {
 		if (gCalUrl.search(/^http/i) < 0) {
-			debug.warn("getGCalData(): bad url: "+ gCalUrl);
+			debug.warn("**** getGCalData(): bad url: "+ gCalUrl);
 			return;
 		}
 		gCalUrl = gCalUrl.replace(/\/basic$/, '/full');
@@ -505,12 +506,12 @@
 		startDate = new Date();
 		startDate.setTime(startDate.getTime() + startDays*24*3600*1000);
 		startmin = cnMF.rfc3339(startDate,false);
-		debug.info("getGCalData(): start-min: "+startmin);
+		debug.debug(" getGCalData(): start-min: "+startmin);
 
 		endDate = new Date();
 		endDate.setTime(endDate.getTime() + endDays*24*3600*1000);
 		startmax = cnMF.rfc3339(endDate,true);
-		debug.info("getGCalData(): start-max: "+startmax);
+		debug.debug(" getGCalData(): start-max: "+startmax);
 
 		// http://code.google.com/apis/calendar/docs/2.0/reference.html
 		gCalObj = {
@@ -523,7 +524,7 @@
 		};
 		if (cnMF.tz.name != 'unknown') {
 			gCalObj.ctz = cnMF.tz.name; // ex: 'America/Chicago'
-			debug.info("Displaying calendar times using this timezone: "+ gCalObj.ctz);
+			debug.debug(" Displaying calendar times using this timezone: "+ gCalObj.ctz);
 		}
 		$.ajax({
 			url: gCalUrl + "?alt=json-in-script&callback=?",
@@ -535,7 +536,7 @@
 			}, 
 			complete: function (jqXHR, textStatus) {
 				if (textStatus !== 'success') {
-					debug.warn("getGCalData problem: ", textStatus, gCalUrl, jqXHR);
+					debug.warn("**** getGCalData problem: ", textStatus, gCalUrl, jqXHR);
 					if ('function' === typeof callbacks.onError) {
 						callbacks.onError(jqXHR, textStatus);
 					}
@@ -548,7 +549,7 @@
 		var calendarInfo = {},
 		    uniqAddr = {};
 
-		debug.info("parseGCalData() calendar data: ",cdata);
+		debug.debug(" parseGCalData() calendar data: ",cdata);
 
 		calendarInfo.gCalUrl = gCalUrl;
 		calendarInfo.gcTitle = cdata.feed.title ? cdata.feed.title['$t'] : 'title unknown';
@@ -559,14 +560,14 @@
 		// TODO2 move this to a method
 		if (!cnMF.tz.computedFromBrowser) {
 			cnMF.tz.name = cdata.feed.gCal$timezone.value;
-			debug.info("Displaying calendar times using calendar timezone: "+ cnMF.tz.name);
+			debug.debug(" Displaying calendar times using calendar timezone: "+ cnMF.tz.name);
 			// TODO2 count in analytics how many people use timezones in browser vs calendar
 		}
 
 		for (var ii=0; cdata.feed.entry && cdata.feed.entry[ii]; ii++) {
 			var curEntry = cdata.feed.entry[ii];
 			if (!(curEntry['gd$when'] && curEntry['gd$when'][0]['startTime'])) {
-				debug.info("skipping cal curEntry (no gd$when) %s (%o)", curEntry['title']['$t'], curEntry);
+				debug.debug(" skipping cal curEntry (no gd$when) %s (%o)", curEntry['title']['$t'], curEntry);
 				continue;
 			};
 			var url = {};
@@ -595,7 +596,7 @@
 			if (kk.addrToGoogle) {
 				uniqAddr[kk.addrToGoogle] = 1;
 			} else {
-				debug.info("Skipping blank address for "+kk.name+" ["+kk.addrOrig+"]",kk);
+				debug.debug(" Skipping blank address for "+kk.name+" ["+kk.addrOrig+"]",kk);
 			}
 			debug.log("parsed curEntry "+ii+": ", kk.name, curEntry, kk);
 		}
@@ -697,7 +698,7 @@
 				ret = [];
 			for (var ii in addresses) {
 				if (!(ii.length > 0)) {
-					debug.warn("geocodeManager-geoMgrInit() skipping blank address");
+					debug.warn("**** geocodeManager-geoMgrInit() skipping blank address");
 					continue;
 				}
 				numAddresses++;
@@ -844,7 +845,7 @@
 
 		function parseGObj(gObj) {
 			if (typeof(gObj) != 'object') {
-				debug.warn("parseGObj() shouldn't be here " + typeof gObj, gObj);
+				debug.warn("**** parseGObj() shouldn't be here " + typeof gObj, gObj);
 				return;
 			}
 			if (gObj.tmpError) {
@@ -859,7 +860,7 @@
 				}
 
 			} else if (gObj.error) {
-				debug.info("parseGObj() geocode error " + gObj.error, gObj);
+				debug.debug(" parseGObj() geocode error " + gObj.error, gObj);
 				geoCache[gObj.addr1].resolved = true;
 				geoCache[gObj.addr1].validCoords = false;
 				geoCache[gObj.addr1].inProgress = false;
@@ -869,7 +870,7 @@
 
 			} else if (gObj.lt) {
 				if (!gObj.addr1 || !geoCache[gObj.addr1]) {
-					debug.warn("parseGObj() debug me", gObj);
+					debug.warn("**** parseGObj() debug me", gObj);
 					return;
 				}
 				geoCache[gObj.addr1].lt = gObj.lt;
@@ -884,7 +885,7 @@
 				//gOpts.geocodedAddrCallback(geoCache[gObj.addr1]);
 
 			} else {
-			  debug.warn("parseGObj() should not be here ", gObj);
+			  debug.warn("**** parseGObj() should not be here ", gObj);
 			}
 		}
 

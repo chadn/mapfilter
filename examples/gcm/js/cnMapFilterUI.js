@@ -18,6 +18,15 @@
 
 // TODO2: merge the following doc ready with cnMFUI_init and the rest 
 $(document).ready(function() {
+
+	debug.time("debug.time");
+	debug.error("**** debug.error");
+	debug.warn("**** debug.warn");
+	debug.info("--- debug.info"); 
+	debug.debug("  debug.debug");
+	debug.log("debug.log");
+	debug.timeEnd("debug.time");
+
 	//$("#xmlHelpButton").click(function() { $("#xmlHelpInfo").toggle(); });
 	// var myURL = parseURL('http://abc.com:8080/dir/index.html?id=255&m=hello#top');
 	var myURL = parseURL(window.location.href);
@@ -128,7 +137,6 @@ $(document).ready(function() {
 		});
 		return clink;
 	}
-
 
 	//
 	// init mapFilter via UI wrapper
@@ -440,7 +448,7 @@ $(document).ready(function() {
 				var increaseZoom = Math.floor((maxZoom - curZoom)/2);
 				newZoom = curZoom + (increaseZoom > 1 ? increaseZoom : 1);
 			}
-			debug.warn("zoomTo(): maxZoom="+maxZoom+", curZoom="+curZoom+", newZoom="+newZoom);
+			debug.info("--- zoomTo(): maxZoom="+maxZoom+", curZoom="+curZoom+", newZoom="+newZoom);
 			myGmap.setCenter( eventObj.getGoogleMarker().getPosition() );
 			myGmap.setZoom(newZoom);
 
@@ -561,7 +569,7 @@ $(document).ready(function() {
 		 		msDiff = dateObj.getTime() - now.getTime();
 		 		return Math.round(msDiff / (24*3600*1000));
 		 	}
-		 	debug.warn(' date2days('+date+') invalid date format !!!!!!!!!!!! TODO !!!!');
+		 	debug.warn('****  date2days('+date+') invalid date format !!!!!!!!!!!! TODO !!!!');
 		 	return 0;
 		}
 
@@ -596,21 +604,21 @@ $(document).ready(function() {
 
 
 			$("#ResultsMapHdrFilterByMap").click(function(){
-				debug.warn('------ ResultsMapHdrFilterByMap clicked');
-				   _gaq.push(['_trackEvent', 'Interaction', 'ResultsMapHdrFilterByMap']);
+				debug.info('--- ResultsMapHdrFilterByMap clicked');
+				_gaq.push(['_trackEvent', 'Interaction', 'ResultsMapHdrFilterByMap']);
 				cnMF.mapAllEvents();
-				debug.warn('------ ResultsMapHdrFilterByMap clicked');
 			});
 			$("#ResultsMapHdrFilterByDate").click(function(){
-				   _gaq.push(['_trackEvent', 'Interaction', 'ResultsMapHdrFilterByDate']);
+				debug.info('--- ResultsMapHdrFilterByDate clicked');
+				_gaq.push(['_trackEvent', 'Interaction', 'ResultsMapHdrFilterByDate']);
 				resetStartEndDays('sliders');
 				//mapAllEvents();
 			});
 			$("#ResultsMapHdrFilterFrozen").click(function(){
-				// on the map, close a marker's info window
-				cnMF.myMarkers.closeInfoWindow();
-			 	_gaq.push(['_trackEvent', 'Interaction', 'ResultsMapHdrFilterFrozen']);
+				debug.info('--- ResultsMapHdrFilterFrozen clicked');
 				$("#ResultsMapHdrFilterFrozen").css('display','none');
+				cnMF.myMarkers.closeInfoWindow(); // this will call infoWindowClosed()
+				_gaq.push(['_trackEvent', 'Interaction', 'ResultsMapHdrFilterFrozen']);
 			});
 
 			$("#ResultsMapUnknown").html('<div id="ResultsMapUnknownHdr"></div><div id="ResultsMapUnknownTable"></div>');
@@ -621,6 +629,7 @@ $(document).ready(function() {
 				modal: true
 			});
 			$("#ResultsMapHdrWarning").click(function(){
+				debug.info('--- ResultsMapHdrWarning clicked');
 				_gaq.push(['_trackEvent', 'Interaction', 'ResultsMapHdrWarning']);
 				dialogUnknowns.dialog('open');
 		  	});
@@ -782,7 +791,7 @@ $(document).ready(function() {
 		}
 
 		function createResultsTable(divId){
-			//debug.info("createResultsTable() ", divId);
+			//debug.log("createResultsTable() ", divId);
 
 			// note: give table dummy tbody data or tablesorter gives "parsers is undefined" error
 			tableHtml = "<table id='"+divId+"Table' class='tablesorter'><thead><tr>"
@@ -969,6 +978,7 @@ $(document).ready(function() {
 		function mapRightTab(mapId) {
 			$('#'+mapId).append("<a id='rightTab' title='Click to show/hide GCM Panel'>-</a>");
 			$('#rightTab').click(function(){
+				debug.info('--- clicked tab, '+ (drawerIsOpen() ? 'clos':'open') + 'ing drawer');
 				drawerIsOpen() ? closeDrawer() : openDrawer();
 			});
 		}
@@ -1057,7 +1067,7 @@ $(document).ready(function() {
 		}
 
 		function eventClicked(eventObj) {
-			debug.log("eventClicked", eventObj.id, eventObj);
+			debug.info("--- eventClicked", eventObj.id, eventObj);
 			// note - addListener setup in initResults() for map's infowindowclose event, calls mapRedraw
 			cnMF.myMarkers.openInfoWindow( buildInfoHtml(eventObj), eventObj.getMarkerObj() );
 			highlightEvent([eventObj.id]);
@@ -1066,7 +1076,7 @@ $(document).ready(function() {
 		}
 
 		function markerClicked(markerObj, markerEventIndex) {
-			debug.log("markerClicked", markerObj, markerEventIndex);
+			debug.info("--- markerClicked", markerObj, markerEventIndex);
 			markerEventIndex = (typeof markerEventIndex === 'undefined') ? 0 : markerEventIndex;
 			cnMF.myMarkers.openInfoWindow(getUpdatedInfoHtml(markerObj, markerEventIndex), markerObj);
 			highlightEvent(markerObj.getEvent(markerEventIndex));
@@ -1186,6 +1196,7 @@ $(document).ready(function() {
 					dateFormat:dateFormatStr
 					});
 			  $('#cancelReloadPage').click(function(){
+				debug.info('--- clicked cancelReloadPage, ');
 				_gaq.push(['_trackEvent', 'Interaction', 'cancelReloadPage']);
 				 $("#newDates").dialog('close');
 			  });
@@ -1196,11 +1207,11 @@ $(document).ready(function() {
 				if (window.location.search.match(/sd=\d+/)) {
 					url = url.replace(/sd=[\d\-]+/,'sd='+sd).replace(/ed=[\d\-]+/,'ed='+ed);
 				} else {
-				 	url = url.replace(/u=/,'sd='+sd+'&ed='+ed+'&u=');
+					url = url.replace(/u=/,'sd='+sd+'&ed='+ed+'&u=');
 				}
-		  		debug.log("reloadPage new url: ", url);
-			  _gaq.push(['_trackEvent', 'Interaction', 'reloadPage', url]);
-				alert('going to url: '+url);
+				debug.info('--- clicked reloadPage, new url: ', url);
+				_gaq.push(['_trackEvent', 'Interaction', 'reloadPage', url]);
+				alert('Reloading to url: '+url);
 				window.location = url;
 				//$("#newDates").dialog('close');
 				//getGCalData(cnMFUI.opts.gCalUrl, date2days( $("#startDate").val()), date2days( $("#endDate").val()));
@@ -1264,11 +1275,13 @@ $(document).ready(function() {
 					+ '</span><div id="newDates"></div>');
 
 				$('#changeDates').click(function(){
+					debug.info('--- clicked changeDates');
 					_gaq.push(['_trackEvent', 'Interaction', 'changeDates']);
 					setupChangeDates();
 				});
 
 				$('#cancelChangeDates').click(function(){
+					debug.info('--- clicked cancelChangeDates');
 					_gaq.push(['_trackEvent', 'Interaction', 'cancelChangeDates']);
 					$("#newDates").css('display','none');
 				});
@@ -1299,7 +1312,7 @@ $(document).ready(function() {
 			// THEN update the loading map 
 			
 			if (userInteraction.hasOccurred()) {
-				debug.warn("cbGeoDecodeAddr() user has interacted with map, skip updateLoadingMap");
+				debug.log("cbGeoDecodeAddr() user has interacted with map, skip updateLoadingMap");
 				return;
 			}
 			var now = new Date().getTime();
@@ -1351,10 +1364,10 @@ $(document).ready(function() {
 			// IF user has not specified a specific zoom in URL,
 			// AND user has not already started interacting with the map.
 			if (cnMFUI.opts.mapAllOnInit && !userInteraction.hasOccurred()) {
-				debug.warn("updateLoadingMap() resizing map to show events, mapAllEvents");
+				debug.log("updateLoadingMap() resizing map to show events, mapAllEvents");
 				cnMF.mapAllEvents();
 			} else {
-				debug.warn("updateLoadingMap() not resizing map to show events, just mapRedraw", cnMFUI.opts.mapAllOnInit, userInteraction.hasOccurred());
+				debug.log("updateLoadingMap() not resizing map to show events, just mapRedraw", cnMFUI.opts.mapAllOnInit, userInteraction.hasOccurred());
 				mapRedraw();
 			}
 		}
@@ -1365,13 +1378,13 @@ $(document).ready(function() {
 
 			cnMF.reportData.submitTime = '' + new Date().getTime();
 			cnMF.reportData.submitTime = cnMF.reportData.submitTime.replace(/(\d{3})$/,".$1"); // add period so its secs.msec
-			debug.info("cbGeoDecodeComplete() post cnMF.reportData:", cnMF.reportData);
+			debug.debug(" cbGeoDecodeComplete() post cnMF.reportData:", cnMF.reportData);
 
 			var decodeMs = parseInt(cnMF.reportData.submitTime.replace(/\./,'')) - parseInt(cnMF.reportData.loadTime.replace(/\./,'') );
 
 			_gaq.push(['_trackEvent', 'Loading', 'cal-complete', gCalURL]);
 			_gaq.push(['_trackEvent', 'Loading', 'cal-loadTime', gCalURL, decodeMs]);  // we can find avg decode time per calendar
-			debug.info("cbGeoDecodeComplete() calendars decode time:", gCalURL, decodeMs );
+			debug.debug(" cbGeoDecodeComplete() calendars decode time:", gCalURL, decodeMs );
 
 			calendarsDecoding -= 1;
 			if (calendarsDecoding === 0) {
@@ -1388,9 +1401,9 @@ $(document).ready(function() {
 					_gaq.push(['_trackEvent', 'Loading', 'cal-total' + calendarURLs.length, calendarURLs[ii], cnMF.reportData.uniqAddrTotal] );
 					_gaq.push(['_trackEvent', 'Loading', 'cal-errors' + calendarURLs.length, calendarURLs[ii], cnMF.reportData.uniqAddrErrors] );
 				}
-				debug.info("cbGeoDecodeComplete() All calendars decoded.", decodeMs, cnMF.reportData );
+				debug.debug(" cbGeoDecodeComplete() All calendars decoded.", decodeMs, cnMF.reportData );
 			} else {
-				debug.info("cbGeoDecodeComplete() still decoding "+ calendarsDecoding + " more calendar.");
+				debug.debug(" cbGeoDecodeComplete() still decoding "+ calendarsDecoding + " more calendar.");
 			
 			}
 
