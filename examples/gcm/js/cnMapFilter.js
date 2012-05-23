@@ -69,9 +69,6 @@
 	EventClass.prototype.getDirectionsUrlStr = function(){
 		return 'http://maps.google.com/maps?f=d&q=' + this.addrToGoogle.replace(/ /g, '+').replace(/"/g, '%22');
 	};
-	EventClass.prototype.getDirectionsHtmlStr = function(){
-		return '<a href="' + this.getDirectionsUrlStr() + '" title="Get Directions using maps.google.com">Directions</a>';
-	};
 	EventClass.prototype.insideCurMap = function(mapbox){
 		return this.validCoords ? mapbox.contains(new google.maps.LatLng(this.lt, this.lg)) : false;
 	};

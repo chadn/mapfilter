@@ -195,8 +195,9 @@ body {
 	margin: 0;
 }
 #resultsData {
-	overflow:auto;
+	overflow:hidden;
 	padding-right: 100px; /* match gcmLogo width */	
+	background-color: #FFF;
 }
 #resultsDataFilters {
 	/*background-color: #E6EEEE;*/

@@ -4,10 +4,7 @@
  * User Interface for cnMapFilter, which allows user to
  * view data on a map and list, where the map filters the data,
  * only showing items that have coordinates/address on map's current display.
- *
- * requires cnMapFilter.js and jquery 1.7+
- *
- * Usage: cnMFUI.init(options)
+ * More at https://github.com/chadn/mapfilter
  *
  * Warning:  This file is very messy, used for prototyping functionality and 
  * for experimenting with coding methods.  I apologize.
@@ -116,22 +113,6 @@ $(document).ready(function() {
 		return value; 
 	}
 
-	// Configure here the values, from URL or default
-	var maptype = validateInt('m',0,4, 0); 
-	var gZoomLevel = validateInt('z',1,20, 13); 
-	var mapAllOnInit = (httpGetParam('z') != null ? 0 : 1) ; 
-
-	// default to Chicago
-	var ll = validateFloat('lng',-180,180, -87.626072); 
-	var lt = validateFloat('lat',-180,180, 41.885405); 
-
-
-	var map_size=validateSize('size',200,2000,200,2000, [800,600]);
-	//var xmlurl = validateURL('u'); 
-	var xmlurl = httpGetParam('u');
-
-	
-	
 	function genLink(curData) {
 		clink = window.location.pathname +'?z='+ curData.mapZoom;
 		clink += '&lat='+ curData.mapCenterLt;
@@ -139,11 +120,12 @@ $(document).ready(function() {
 		clink += '&m='+ curData.mapType;
 		clink += '&sd='+ curData.startDay;
 		clink += '&ed='+ curData.endDay;
-		$.each(['u','gc','gcg','gci'], function(index, param) { 
-			clink += '&' + param + '=' + myURL.params[param];
+		clink += '&cd='+ curData.closeDrawer; 
+		$.each(['u','gc','gcg','gci'], function(index, param) {
+			if (myURL.params[param]) {
+				clink += '&' + param + '=' + myURL.params[param];
+			}
 		});
-		//clink += "&u=" + xmlurl;
-		// clink += "&u" + (typeof myURL.params.u == 'string' ? [myURL.params.u] : myURL.params.u)
 		return clink;
 	}
 
@@ -156,11 +138,12 @@ $(document).ready(function() {
 		mapId: "map_id",
 		listId: "tableTab",
 		statusId: "MapStatus",
-		mapCenterLt: lt,
-		mapCenterLg: ll,
-		mapZoom: gZoomLevel,
-		mapType: maptype,
-		mapAllOnInit: mapAllOnInit,
+		closeDrawer: validateInt('cd', 0, 9, 0),
+		mapCenterLt: validateFloat('lat',-180,180, 41.885405),
+		mapCenterLg: validateFloat('lng',-180,180, -87.626072), // default to Chicago
+		mapZoom: validateInt('z',1,20, 13),
+		mapType: validateInt('m',0,4, 0),
+		mapAllOnInit: httpGetParam('z') === null,
 
 		gCalURLs: typeof myURL.params.u == 'string' ? [myURL.params.u] : myURL.params.u,
 		gCalGroups: myURL.params.gcg,
@@ -204,6 +187,7 @@ $(document).ready(function() {
 
 		var ndays = cnMFUI.opts.gCalDays;
 		var jumptxt = cnMFUI.opts.jumpTxt;
+		var openDrawerDurationMs = 300;
 		var mapClickListener = false,
 			mapDragstartListener = false,
 			lastUpdate4MapLoad = false,
@@ -222,7 +206,6 @@ $(document).ready(function() {
 		mapVersion = "Map Version 2012-4-8";
 
 		cnMF.reportData.loadTime = (startMs2 +'').replace(/(\d{3})$/,".$1") // add period so its secs.msec
-		cnMF.reportData.userInteracted = false;
 
 		function init() {
 
@@ -230,6 +213,7 @@ $(document).ready(function() {
 			var calendarURLs = getCalendarURLs();
 			debug.log('mapfilter().init(), cnMF:',cnMF);
 			myGmap = initGMap();
+			userInteraction.init();
 			initDivs();
 			mapJumpBox(); 
 			mapRightTab(cnMFUI.opts.mapId);
@@ -299,6 +283,9 @@ $(document).ready(function() {
 			}
 
 			debug.log("mapFilter().init() Completed.");
+			if (cnMFUI.opts.closeDrawer == 2) {
+				closeDrawer()
+			}
 		}
 
 		function getCalendarURLs() {
@@ -374,12 +361,19 @@ $(document).ready(function() {
 				var eventIndex = parseInt($(this).data('event_index'));
 				var markerEventIndex = parseInt( $(this).data('marker_event_index') );
 				markerClicked(cnMF.myMarkers.getMarkerObj(eventIndex), markerEventIndex);
+				userInteraction.recordInteraction();
 				return false;
 			});
 			
 			$('body').on('click','a.event_table', function(){
 				eventClicked( cnMF.getEventObj($(this).data('event_index')) ); 
 				_gaq.push(['_trackEvent', 'Interaction', 'a.event_table']);
+				userInteraction.recordInteraction();
+				return false;
+			});
+			$('body').on('click','a.zoom_to', function(){
+				zoomTo( cnMF.getEventObj($(this).data('event_index')) ); 
+				_gaq.push(['_trackEvent', 'Interaction', 'a.zoom_to']);
 				return false;
 			});
 		}
@@ -389,7 +383,7 @@ $(document).ready(function() {
 			return $(window).width() > 600 ? Math.floor($(window).width()/3) : 300;
 		}
 		function getRtSideHeight() {
-			return $(window).height() - 110;
+			return $(window).height() - 120; // subtract more to give more room at bottom right
 		}
 
 
@@ -432,7 +426,27 @@ $(document).ready(function() {
 					mapMovedListener();
 				});
 			});
+			
 			return myGmap;
+		}
+
+		function zoomTo(eventObj) {
+			var maxZoom = 19,
+				curZoom = myGmap.getZoom(),
+				newZoom = maxZoom;
+
+			// zoom in half as much between current zoom level and max zoomed in level
+			if (curZoom < maxZoom) {
+				var increaseZoom = Math.floor((maxZoom - curZoom)/2);
+				newZoom = curZoom + (increaseZoom > 1 ? increaseZoom : 1);
+			}
+			debug.warn("zoomTo(): maxZoom="+maxZoom+", curZoom="+curZoom+", newZoom="+newZoom);
+			myGmap.setCenter( eventObj.getGoogleMarker().getPosition() );
+			myGmap.setZoom(newZoom);
+
+			window.setTimeout(function(){
+				myGmap.panBy(drawerIsOpen() ? 100 : 0, -100); // pan down slightly so infowindow can be seen better
+			}, 600);
 		}
 
 
@@ -663,14 +677,22 @@ $(document).ready(function() {
 			// since we cleared table, need repopulate it, too.
 			//updateResultsTable('ResultsMapEvents', true, false);
 			
-			updateResults(); // this may be called again in mapRedraw
 
 			$('#rtSide').width( getRtSideWidth() ).height( getRtSideHeight() );
+			updateResults(); // this may be called again in mapRedraw
 
 			mapRedraw(); // check to see if we need to add/delete markers and updateResults
 		}
 
 		function getRtSideLeftoverHeight() {
+			/*
+			debug.log("getRtSideLeftoverHeight(), getRtSideHeight - titleDiv, resultsData, ResultsMapHdr", 
+			  getRtSideHeight() - ($('#titleDiv').height() + $('#resultsData').height() + $('#ResultsMapHdr').height()),
+			  getRtSideHeight(),
+			  $('#titleDiv').height(), 
+			  $('#resultsData').height(),
+			  $('#ResultsMapHdr').height() );
+			*/
 			return getRtSideHeight() - ($('#titleDiv').height() + $('#resultsData').height() + $('#ResultsMapHdr').height());
 		}
 
@@ -723,7 +745,7 @@ $(document).ready(function() {
 			createResultsTable('ResultsMapEvents'); // this erases all html, including jScrollPane
 			
 			$('#ResultsMapEventsTable').width(getRtSideWidth()-15); //.height(getRtSideLeftoverHeight() - 4);
-			$('#ResultsMapEventsTable tbody').height(getRtSideLeftoverHeight() - 4);
+			//$('#ResultsMapEventsTable tbody').height(getRtSideLeftoverHeight() - 4);
 			//updateEventsContainerSize('#ResultsMapEventsTable');
 
 			updateResultsTable('ResultsMapEvents', true, false);
@@ -760,7 +782,7 @@ $(document).ready(function() {
 		}
 
 		function createResultsTable(divId){
-			debug.warn("createResultsTable() ", divId);
+			//debug.info("createResultsTable() ", divId);
 
 			// note: give table dummy tbody data or tablesorter gives "parsers is undefined" error
 			tableHtml = "<table id='"+divId+"Table' class='tablesorter'><thead><tr>"
@@ -871,7 +893,7 @@ $(document).ready(function() {
 				return;
 			}
 			redrawing=true;
-			debug.time('total mapRedraw');
+			//debug.time('total mapRedraw');
 
 			if (cnMF.updateMarkers()) {
 			  debug.log("mapRedraw() updated markers, changes found");
@@ -881,7 +903,7 @@ $(document).ready(function() {
 			  debug.log("mapRedraw() updated markers - no changes, no updateResults()");
 			  updateFilters();
 			}
-			debug.timeEnd('total mapRedraw');
+			//debug.timeEnd('total mapRedraw');
 
 
 			// todo: don't update status every map redraw. then we can call mapRedraw during geocoding, but
@@ -911,8 +933,10 @@ $(document).ready(function() {
 
 		function mapMovedListener() {
 			if ( cnMF.myMarkers.infoWindowIsOpen() ) {
-				  debug.log("mapMovedListener(): infowindow is open, not redrawing.");
-				  return;
+				cnMF.throttle.setTimeout( function(throttled) {
+					debug.log("mapMovedListener(): infowindow is open, not redrawing.");
+				}, 500, "mapMovedListenerNotRedrawing");
+				return;
 			}
 			cnMF.throttle.setTimeout( function(throttled) {
 				debug.log("mapMovedListener throttled, now redrawing after "+ throttled.elapsedMs +"ms and "+ throttled.called +" call(s).");
@@ -945,22 +969,23 @@ $(document).ready(function() {
 		function mapRightTab(mapId) {
 			$('#'+mapId).append("<a id='rightTab' title='Click to show/hide GCM Panel'>-</a>");
 			$('#rightTab').click(function(){
-				var durationMs = 300;
-				var marginRight = $('#rtSide').css('margin-right');
-				// $('#rtSide').width()
-				debug.log("mapRightTab() rtSide').marginRight: ", marginRight );
-				if (marginRight == '0px') {
-					$('#rightTab').html('+');
-					$('#rtSide').animate({
-						'margin-right' : '-'+ getRtSideWidth() + 'px'
-					}, durationMs, 'linear');
-				} else {
-					$('#rightTab').html('-');
-					$('#rtSide').animate({
-						'margin-right' : '0px'
-					}, durationMs, 'linear');
-				}
+				drawerIsOpen() ? closeDrawer() : openDrawer();
 			});
+		}
+		function drawerIsOpen() {
+			return '0px' == $('#rtSide').css('margin-right');
+		}
+		function openDrawer() {
+			$('#rightTab').html('-');
+			$('#rtSide').animate({
+				'margin-right' : '0px'
+			}, openDrawerDurationMs, 'linear');
+		}
+		function closeDrawer() {
+			$('#rightTab').html('+');
+			$('#rtSide').animate({
+				'margin-right' : '-'+ getRtSideWidth() + 'px'
+			}, openDrawerDurationMs, 'linear');
 		}
 
 
@@ -978,8 +1003,10 @@ $(document).ready(function() {
 			infoHtml += "<div id='IWContent' class='preWrapped'>"+ cnMFUI.maxStr( addLinks(eventObj.desc), 900, 26, eventObj.url) +"</div>";
 			infoHtml += '<div id="IWZoom">';
 			infoHtml += cnMF.formatDate(eventObj.dateStart, 'F D, l gx') +"-"+ cnMF.formatDate(eventObj.dateEnd, 'gx') +"<br>";
-			infoHtml += '<a href="javascript:void(0)" onclick="cnMFUI.zoomTo('+ eventObj.id +')">Zoom To</a> - ';
-			infoHtml += eventObj.addrOrig +" - " + eventObj.getDirectionsHtmlStr();
+			infoHtml += '<a class="zoom_to actionable" data-event_index="'+ eventObj.id +'">Zoom To</a> - ';
+			infoHtml += eventObj.addrOrig +" - ";
+			infoHtml += '<a  href="' + eventObj.getDirectionsUrlStr() + '" class="actionable" target="_blank"';
+			infoHtml += ' title="Get Directions using maps.google.com">Directions</a>';
 			infoHtml += '</div></div>';
 			return infoHtml;
 		}
@@ -1009,7 +1036,7 @@ $(document).ready(function() {
 		}
 		
 		function highlightEvent(eventIds) {
-			debug.log("highlightEvent", eventIds);
+			//debug.log("highlightEvent", eventIds);
 			eventIds = typeof eventIds == 'number' ? [eventIds]
 				: typeof eventIds == 'string' ? [parseInt(eventIds)] : eventIds;
 			/*
@@ -1022,7 +1049,7 @@ $(document).ready(function() {
 			$("a.event_table").each(function(){
 				for (var ii=0; ii < eventIds.length; ii++) {
 					if ($(this).data('event_index') == eventIds[ii]) {
-						debug.log("highlightEvent found event id: "+ eventIds[ii]);
+						//debug.log("highlightEvent found event id: "+ eventIds[ii]);
 						$(this).addClass("highlight2");
 					}
 				}
@@ -1034,6 +1061,8 @@ $(document).ready(function() {
 			// note - addListener setup in initResults() for map's infowindowclose event, calls mapRedraw
 			cnMF.myMarkers.openInfoWindow( buildInfoHtml(eventObj), eventObj.getMarkerObj() );
 			highlightEvent([eventObj.id]);
+			myGmap.setCenter( eventObj.getGoogleMarker().getPosition() );
+			myGmap.panBy(100, -100); // pan slightly away from drawer so infowindow can be seen better
 		}
 
 		function markerClicked(markerObj, markerEventIndex) {
@@ -1044,16 +1073,19 @@ $(document).ready(function() {
 		}
 
 		function updateStatus(msg) {
-		  	$("#MapStatus").html(msg);
-			debug.log("updateStatus(): "+ msg);
+			var oldMsg = $("#MapStatus").html();
+			if (oldMsg != msg) {
+				$("#MapStatus").html(msg);
+				debug.log("updateStatus(): "+ msg);
+			}
 		}
-
 		function updateStatus2(msg) {
-		  	$("#MapStatus2").html(msg);
-			debug.log("updateStatus2(): "+ 	msg);
+			var oldMsg = $("#MapStatus2").html();
+			if (oldMsg != msg) {
+				$("#MapStatus2").html(msg);
+				debug.log("updateStatus2(): "+ msg);
+			}
 		}
-
-
 
 
 
@@ -1265,37 +1297,64 @@ $(document).ready(function() {
 			// AND its been over 3000 ms since last updated map with results from
 			// newly decoded addresses (we don't want to update map too frequently),
 			// THEN update the loading map 
-			if (cnMF.reportData.userInteracted) {
+			
+			if (userInteraction.hasOccurred()) {
+				debug.warn("cbGeoDecodeAddr() user has interacted with map, skip updateLoadingMap");
 				return;
 			}
 			var now = new Date().getTime();
 			if (lastUpdate4MapLoad) {
 				if (3000 < (now - lastUpdate4MapLoad)) {
-						updateLoadingMap();
+					updateLoadingMap();
 				}
 			} else {
 				lastUpdate4MapLoad = now;
 			}
 		}
 
-		function cbUserInteracted_DELME() {
-			if (cnMF.reportData.userInteracted) {
-				// already recorded first user interaction
-				return;
+		// Architecture note - experimenting with the idea of using closures to group similar chunks of code
+		// 
+		// userInteraction.init() to init, setting up map listeners
+		// userInteraction.recordInteraction() to record that use interacted (clicked on something)
+		// userInteraction.hasOccurred() returns true if user has interacted
+		// 
+		var userInteraction = (function(){
+			var listeners = {};
+			var usersFirstInteraction = null;
+			var userInteraction = {
+				init : function() {
+					$.each(['click', 'dragstart'], function(index, mapEvent){
+						// if any listener fires, then user has interacted.  Clear all listeners and set usersFirstInteraction to current time (non-false).
+						listeners[mapEvent] = google.maps.event.addListener(myGmap, mapEvent, function() {
+							userInteraction.recordInteraction();
+						});
+					});
+					
+				},
+				recordInteraction : function() {
+					usersFirstInteraction = '' + new Date().getTime();
+					usersFirstInteraction = usersFirstInteraction.replace(/(\d{3})$/,".$1"); // add period so its secs.msec
+					$.each(listeners, function(theMapEvent, mapsEventListener){
+						google.maps.event.removeListener(mapsEventListener);
+					});
+					debug.log("userInteraction.recordInteraction ", usersFirstInteraction);
+				},
+				hasOccurred : function() {
+					return usersFirstInteraction != null;
+				}
 			}
-			GEvent.removeListener(mapClickListener);
-			GEvent.removeListener(mapDragstartListener);
-			cnMF.reportData.userInteracted = '' + new Date().getTime();
-			cnMF.reportData.userInteracted = cnMF.reportData.userInteracted.replace(/(\d{3})$/,".$1"); // add period so its secs.msec
-			debug.log("cnMF.reportData.userInteracted ",cnMF.reportData.userInteracted);
-		}
+			return userInteraction;
+		})();
+
 		function updateLoadingMap() {
-			// only showing all events (move from chicago to NY, zoom out, etc) IF
-			// - user has not specified a specific zoom (handled in index.php logic and passed to us via mapAllOnInit)
-			// - user has not already started interacting with the map
-			if (cnMFUI.opts.mapAllOnInit && !cnMF.reportData.userInteracted) {
+			// Only resize map to show all events (move from chicago to NY, zoom out, etc),
+			// IF user has not specified a specific zoom in URL,
+			// AND user has not already started interacting with the map.
+			if (cnMFUI.opts.mapAllOnInit && !userInteraction.hasOccurred()) {
+				debug.warn("updateLoadingMap() resizing map to show events, mapAllEvents");
 				cnMF.mapAllEvents();
 			} else {
+				debug.warn("updateLoadingMap() not resizing map to show events, just mapRedraw", cnMFUI.opts.mapAllOnInit, userInteraction.hasOccurred());
 				mapRedraw();
 			}
 		}
@@ -1338,8 +1397,10 @@ $(document).ready(function() {
 			// TODO: remove cnMF.reportData ?
 		
 			updateLoadingMap();
-			// $('#rightTab').click(); // close tab
 			
+			if (cnMFUI.opts.closeDrawer) {
+				closeDrawer()
+			}
 		}
 		function dumpError(err) {
 			var msg = '';
@@ -1511,22 +1572,6 @@ $(document).ready(function() {
 
 
 
-	zoomTo: function(id) {
-		var maxZoom = 19,
-			curZoom = myGmap.getZoom(),
-			newZoom = maxZoom;
-		if (curZoom < maxZoom) {
-			var increaseZoom = Math.floor((maxZoom - curZoom)/2);
-			newZoom = curZoom + (increaseZoom > 1 ? increaseZoom : 1);
-		}
-		debug.warn("zoomTo(): maxZoom="+maxZoom+", curZoom="+curZoom+", newZoom="+newZoom);
-		//coords = cnMF.eventList[id].getCoordsStr();
-		//myGmap.setCenter(cnMF.myMarkers.getGoogleMarker(coords).getLatLng(), newZoom);
-		myGmap.setCenter( cnMF.eventList[id].getGoogleMarker().getPosition() );
-		myGmap.setZoom(newZoom);
-		
-		//mapChangedCallback();
-	},
 
 	jumpToAddress: function(address) {
 
@@ -1541,7 +1586,7 @@ $(document).ready(function() {
 				kk.lt = gObj.lt;
 				kk.lg = gObj.lg;
 				jumptxt = '';
-				myGmap.setCenter(new google.maps.LatLng(gObj.lt, gObj.lg) );
+				myGmap.setCenter(new google.maps.LatLng(gObj.lt, gObj.lg) ); 
 				myGmap.setZoom(cZoom);
 			} else {
 				// log gObj.error;
