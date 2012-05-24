@@ -19,6 +19,7 @@
 // TODO2: merge the following doc ready with cnMFUI_init and the rest 
 $(document).ready(function() {
 
+	/* see cnMapFilter.js for how each debug log level should be used
 	debug.time("debug.time");
 	debug.error("**** debug.error");
 	debug.warn("**** debug.warn");
@@ -26,7 +27,8 @@ $(document).ready(function() {
 	debug.debug("  debug.debug");
 	debug.log("debug.log");
 	debug.timeEnd("debug.time");
-
+	*/
+	
 	//$("#xmlHelpButton").click(function() { $("#xmlHelpInfo").toggle(); });
 	// var myURL = parseURL('http://abc.com:8080/dir/index.html?id=255&m=hello#top');
 	var myURL = parseURL(window.location.href);
@@ -976,7 +978,7 @@ $(document).ready(function() {
 
 	
 		function mapRightTab(mapId) {
-			$('#'+mapId).append("<a id='rightTab' title='Click to show/hide GCM Panel'>-</a>");
+			$('#'+mapId).append("<a id='rightTab' title='Click to show/hide GCM Drawer'>-</a>");
 			$('#rightTab').click(function(){
 				debug.info('--- clicked tab, '+ (drawerIsOpen() ? 'clos':'open') + 'ing drawer');
 				drawerIsOpen() ? closeDrawer() : openDrawer();
@@ -1572,10 +1574,7 @@ $(document).ready(function() {
 		mapType: 0,
 		mapAllOnInit: true,
 
-		numTableRows: 5,
-
-		unSupportedHtml: "Unfortunately your browser doesn't support Google Maps.<br /> To check browser compatibility visit the following <a href=\"http://local.google.com/support/bin/answer.py?answer=16532&topic=1499\">link</a>.",
-
+		numTableRows: 5
 		// googleApiKey: 'ABQIAAAAQ8l06ldZX6JSGI8gETtVhhTrRIj9DJoJiLGtM4J1SrTlGmVDcxQDT5BVw88R8j75IQxYlwFcEw6w9w' // v2 api for chadnorwood.com
 
 	},

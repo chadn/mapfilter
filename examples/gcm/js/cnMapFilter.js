@@ -184,12 +184,14 @@
 	// createMarkerObj() creates google markers and event listener.
 	MarkersClass.prototype.createMarkerObj = function(eventObj){
 		var coordsStr = eventObj.getCoordsStr();
-		debug.log("createMarkerObj() creating marker, eventObj.id=%s, %s, %o", eventObj.id, coordsStr, eventObj);
+		debug.log("createMarkerObj() creating marker, eventObj.id=", eventObj.id, coordsStr, eventObj);
 		return this.allMarkers[coordsStr] = MarkerClass(eventObj, this.gMap);
 	}
 	MarkersClass.prototype.hideEvent = function(eventObj){
 		var markerObj = this.getMarkerObj(eventObj);
-		
+		if (!markerObj) {
+			return;
+		}
 		for (var ii=0; ii < markerObj.eventList.length; ii++) {
 			if (markerObj.eventList[ii] === eventObj.id) {
 				// found it, remove
@@ -359,9 +361,12 @@
 		// first create the box that holds all event locations
 		var box = null;
 		var gMap = cnMF.coreOptions.gMap;
+		var numValidCoords = 0;
 		for (var i in cnMF.eventList) {
 			var kk = cnMF.eventList[i];
 			if (! kk.validCoords) continue; // skip unrecognized addresses
+			numValidCoords++;
+			//debug.log("mapAllEvents(): adding event "+ kk.id + ", "+ kk.name);
 
 			if (box === null) {
 				var corner = new google.maps.LatLng(kk.lt, kk.lg);
@@ -374,7 +379,7 @@
 			debug.log("mapAllEvents(): no events");
 			return false;
 		}
-		debug.log("mapAllEvents(): setting new map ");
+		debug.log("mapAllEvents(): setting new map, "+ numValidCoords + " of "+ cnMF.eventList.length + " with valid coords. bounds: " + box.toString());
 		//zoom = gMap.getBoundsZoomLevel(box);
 		//gMap.setCenter( box.getCenter(), (zoom < 2) ? zoom : zoom - 1  );
 		gMap.fitBounds(box); // API3 see also panToBounds()
@@ -422,12 +427,14 @@
 	cnMF.updateMarkers= function(){
 
 		//debug.log( "cnMF.updateMarkers() called ..");
-		mapbox = cnMF.coreOptions.gMap.getBounds();
+		var mapbox = cnMF.coreOptions.gMap.getBounds();
+		//debug.log( "cnMF.updateMarkers() called, bounds:"+ mapbox.toString());
 
 		//debug.time('checking all markers');
-		added = 0;
-		removed = 0;
-		unchanged = 0;
+		var added = 0;
+		var removed = 0;
+		var unchanged = 0;
+		var filtered = 0;
 		cnMF.filteredByDate = false;
 		cnMF.filteredByMap = false;
 		//debug.log( "reset filteredByDate and filteredByMap to FALSE");
@@ -437,8 +444,8 @@
 			var kk = cnMF.eventList[i];
 
 			insideCurMap = kk.insideCurMap(mapbox);
-			//debug.log( "marker "+ (insideCurMap ? 'in':'out') +"side map %o", kk);
-			if (!insideCurMap) {
+			//debug.log( "marker "+ (insideCurMap ? 'in':'out') +"side map. valid, id, obj: ", kk.validCoords, kk.id, kk);
+			if (!insideCurMap && kk.validCoords) {
 				//debug.log( " filteredByMap = true for ",kk);
 				cnMF.filteredByMap = true;
 			}
@@ -453,6 +460,8 @@
 			*/
 			if (filteredOut) {
 				cnMF.filteredByDate = true;
+				cnMF.myMarkers.hideEvent(kk);
+				filtered++;
 			}
 			if (kk.isDisplayed && insideCurMap && !filteredOut) {
 				unchanged++;
