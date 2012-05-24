@@ -1,0 +1,210 @@
+This is the Google Calendar Map (GCM) homepage, part of the <a href="https://github.com/chadn/mapfilter">mapFilter project on github</a>.
+GCM is a way to view calendar events on a google map, see <a href="#About">About</a> for more or 
+go straight to the working <a href="http://chadnorwood.com/gcm/">GCM prototype</a>. 
+This page will change but always contain the latest and greatest on how to use GCM prototype.
+
+<a title="Chicago Map" href="http://chadnorwood.com/gcm/"><img class="right" src="http://farm1.static.flickr.com/106/304395020_897b149434_m_d.jpg" alt="" width="240" height="160" align="right" /></a>
+<ul>
+	<li><a href="#About">About</a></li>
+	<li><a href="#Definitions">Definitions</a></li>
+	<li><a href="#Uses">Uses</a></li>
+	<li><a href="#KeyFeatures">Key Features</a></li>
+	<li><a href="#CalendarSetup">Calendar Setup</a></li>
+	<li><a href="#urlOptions">URL Options</a></li>
+	<li><a href="#Examples">Examples</a></li>
+	<li><a href="#Screenshots">Screenshots</a></li>
+	<li><a href="#InfluencesRelated">Influences and Related</a></li>
+	<li><a href="#BrowserCompatibility">Browser Compatibility</a></li>
+	<li><a href="#WishList">Wish List</a></li>
+	<li><a href="#Changelog">Changelog</a></li>
+</ul>
+<a name="About"></a>
+<h3>About</h3>
+<span>Paraphrased from </span><a href="http://chadnorwood.com/2009/06/12/google-calendar-map/">my first GCM blog</a><span>:</span>
+
+<span>Basically it takes a google calendar and plots all the events on a map.  Well, at least all events that have a valid map address.  The mashup works with any google calendar, as long as its public. You provide the URL of a google calendar XML Feed to GCM, then its javascript code eats it up and spits out markers on the map and lists all events on the right side.  The list is really a table, with sortable columns (sort by date, event name, address).</span>
+
+<span>The map acts like a filter - you only see events that occur on the map canvas.  For example, if the map is</span><a href="http://chadnorwood.com/gcm/?z=14&amp;lat=41.874226&amp;lng=-87.617511&amp;m=0&amp;d=42&amp;u=http://www.google.com/calendar/feeds/vf3u7s6odj0r74q4lrnb730phk@group.calendar.google.com/public/basic"><span> </span><span>zoomed in</span></a><span> to show downtown Chicago, you might only see events in grant park.  But if you</span><a href="http://chadnorwood.com/gcm/?z=9&amp;lat=41.884387&amp;lng=-87.620773&amp;m=0&amp;d=42&amp;u=http://www.google.com/calendar/feeds/vf3u7s6odj0r74q4lrnb730phk@group.calendar.google.com/public/basic"><span> </span><span>zoom way out</span></a><span> you will see events in north chicago or suburbs, too.  This is great when there is a calendar with tons of events going on all over the place. </span>
+
+<span>For more details on this project, check out my </span><a href="https://docs.google.com/present/edit?id=0ATGbM9VB92t4ZGZncGhtN3dfMTE5ZHEyN2M5Z3Q&amp;hl=en"><span>GCM presentation from January 2010</span></a><span>.  Also make sure to read the </span><a href="#KeyFeatures"><span>Key Features</span></a><span> below.</span>
+
+<a name="Definitions"></a>
+<h3><span>Definitions</span></h3>
+<ul>
+	<li><strong>calendar</strong><span> - a google calendar for now.  Only events in the calendar with valid addresses will appear on map.</span></li>
+	<li><strong>event</strong><span> - contains name, location, date, and description.  More than one event can be at same location or same time. Can be repeating</span></li>
+	<li><strong>map canvas</strong><span> - the area of the map you can see on the browser. If an event location is not on the map canvas, it will not be shown on the results list. To zoom out or change map canvas to show all events, remove the map filter by clicking “[x] Filtered by map” </span></li>
+	<li><strong>location</strong><span> - 'where' the event is.  This should be an address, otherwise GCM can't put it on a map.  Examples of locations that are not addresses include  "Mom's house" or "Top of Sears Tower"</span></li>
+	<li><strong>marker</strong><span> - an icon at a location on the map canvas.  When clicked, reveals details on events at that address (may be more than one event at same location)</span></li>
+	<li><strong>results list</strong><span> - on right pane, list of events that are on map.  The results are filtered and sortable by name, date, location. When filtered, it be a subset of all the eventsThis may be all events in date range or a subset.</span></li>
+	<li><strong>filters</strong><span> - appears above results list.  Currently there are just 2 filters - map and date.  Existing filters are always listed, and can be removed by clicking them.  When all filters are removed, all events are displayed in results list (map will change if necessary to show all events, too).</span></li>
+</ul>
+<a name="Uses"></a>
+<h3>Uses</h3>
+<ol>
+	<li><span>User: Going to a neighborhood, want to see what events occur in that neighborhood</span>
+<ul>
+	<li><span>use map to jump to that neighborhood, and the map change triggers results list and markers to update</span></li>
+</ul>
+</li>
+	<li><span>User: Going to attend a specific event, want to see what else is nearby</span>
+<ul>
+	<li><span>use results list to highlight event, which triggers map to center on event </span></li>
+</ul>
+</li>
+	<li><span>Promoter: My band, book tour, historic buildings seminar, archeological dig, etc .. has several events in several places on different dates. I want to show them all.</span></li>
+</ol>
+<a name="KeyFeatures"></a>
+<h3>Key Features</h3>
+<ol>
+	<li><span>Map as a Filter<br class="kix-line-break" />Move or zoom the map to the area you care about.  The markers and the results list update instantly and automatically, hiding events that are not on the map canvas</span></li>
+	<li><span>Date slider as a Filter<br class="kix-line-break" />Show only events that occur between a specific start date and end date.  You can click “Change dates” to pick a large window, say 6 months.  Once all events for those 6 months is loaded and decoded (a few seconds), you can used the date sliders to filter events to a certain week or weekend or whatever.  Instantly.  It’s fun, try it out!</span></li>
+	<li><span>Event Address Debugger<br class="kix-line-break" />If you’re not sure how many of your events have valid addresses as locations, this feature makes it easy to find out. All event locations are decoded, and if any are not valid addresses, a “Warning [3]” will appear above the results list.  Clicking on it displays a table of the problematic events.  Just click “Event Details” to load that specific google calendar event.  If you are logged into google and have edit permissions, you can update it immediately, save, and reload GCM.</span></li>
+	<li><span>Map Link<br class="kix-line-break" />Share a specific events calendar with exact map location and zoom level - just like the "link" button on google maps</span></li>
+	<li><span>Simple<br class="kix-line-break" />First time users - Grab any Google calendar's XML link, drop it in - it just works.  Or grab the “Map Link” and email or IM it to a friend.</span></li>
+	<li><span>Instant<br class="kix-line-break" />When you drag date sliders to a specific day, results list updates instantly.  Likewise, moving the map will instantly update results list to only show those events on the map canvas.</span></li>
+	<li><span>Sortable Results<br class="kix-line-break" />Events in Results List are sortable by name, date, and location </span></li>
+	<li><span>Jump to an address, city, or zip - just type it in the box </span></li>
+	<li><span>Multiple events can exist on one location</span></li>
+</ol>
+<a name="CalenderSetup"></a>
+<h3>Calendar Setup</h3>
+First, make your calendar public (if it ain't your calendar, ask owner for XML feed URL).
+<ol>
+	<li> In the Google Calendar interface, locate "My Calendar" box on the left.</li>
+	<li> Click the arrow next to the calendar you need.</li>
+	<li> A menu will appear. Click "Share this calendar"</li>
+	<li> Check "Make this calendar public"</li>
+	<li> Make sure "Share only my free/busy information" is unchecked.</li>
+	<li> Click "Save"</li>
+</ol>
+Second, find your calendar's XML feed URL
+<ol>
+	<li> In the Google Calendar interface, locate the "My Calendar" box on the left</li>
+	<li> Click the arrow next to the calendar you need.</li>
+	<li> A menu will appear. Click "Calendar settings"</li>
+	<li> In the "Calendar Address" section of the screen, click the XML badge.</li>
+	<li> Your feed's URL will appear. Copy It</li>
+</ol>
+Third, add your URL to the "Add Calendar" box on the main page
+<ul>
+	<li>Before (no calendar)
+<a href="http://chadnorwood.com/gcm/">http://chadnorwood.com/gcm/</a></li>
+	<li>After (example with calendar)
+<a href="http://chadnorwood.com/gcm/?u=http://www.google.com/calendar/feeds/webdog6@gmail.com/public/basic">http://chadnorwood.com/gcm/?u=http://www.google.com/calendar/feeds/webdog6@gmail.com/public/basic</a></li>
+</ul>
+<a name="urlOptions"></a>
+<h3>URL Options</h3>
+This section explains how some of the (un)documented options for http://chadnorwood.com/gcm work.  Options are standard key=value params in the URL.
+<ul>
+	<li>Timezone
+<ul>
+	<li>as of 2011-9-21, gcm defaults to browser's timezone.  Adding tz=cal to URL will use calendar's timezone.  Ex: <a href="http://chadnorwood.com/gcm/?tz=cal&amp;u=https://www.google.com/calendar/feeds/dnr6osjdrtn4fqpf70ep8ck1rc%40group.calendar.google.com/public/basic">http://chadnorwood.com/gcm/?tz=cal&amp;u=https://www.google.com/calendar/feeds/dnr6osjdrtn4fqpf70ep8ck1rc%40group.calendar.google.com/public/basic</a></li>
+</ul>
+</li>
+	<li>Startdate, Enddate
+<ul>
+	<li>sd=2011-2-12</li>
+	<li>ed=2011-2-24</li>
+</ul>
+</li>
+	<li>gc = google calendar feed, shortened
+<ul>
+	<li>instead of a complete URL passed via 'u' param, just pass the email feed from the URL to the 'gc' param.</li>
+	<li>For example,
+<ul>
+	<li>instead of this:  <a href="http://chadnorwood.com/gcm/?tz=cal&amp;u=https://www.google.com/calendar/feeds/dnr6osjdrtn4fqpf70ep8ck1rc@group.calendar.google.com/public/basic">http://chadnorwood.com/gcm/?u=https://www.google.com/calendar/feeds/dnr6osjdrtn4fqpf70ep8ck1rc@group.calendar.google.com/public/basic
+</a></li>
+	<li>Do this  <a href="http://chadnorwood.com/gcm/?gc=dnr6osjdrtn4fqpf70ep8ck1rc@group.calendar.google.com">http://chadnorwood.com/gcm/?gc=dnr6osjdrtn4fqpf70ep8ck1rc@group.calendar.google.com</a></li>
+</ul>
+</li>
+</ul>
+</li>
+	<li>Multiple Calendars
+<ul>
+	<li>Multiple google calendars can now be shown on a map at the same time.  Just use the 'gc' param mentioned above, and separate each calendar email with a comma.</li>
+	<li>For example
+<ul>
+	<li>This URL: <a href="http://chadnorwood.com/gcm/?gc=webdog6@gmail.com,dnr6osjdrtn4fqpf70ep8ck1rc@group.calendar.google.com">http://chadnorwood.com/gcm/?gc=webdog6@gmail.com,dnr6osjdrtn4fqpf70ep8ck1rc@group.calendar.google.com</a></li>
+	<li>Will show these 2 calendars: <a href="https://www.google.com/calendar/feeds/webdog6@gmail.com/public/basic">https://www.google.com/calendar/feeds/webdog6@gmail.com/public/basic</a> - <a href="https://www.google.com/calendar/feeds/dnr6osjdrtn4fqpf70ep8ck1rc@group.calendar.google.com/public/basic">https://www.google.com/calendar/feeds/dnr6osjdrtn4fqpf70ep8ck1rc@group.calendar.google.com/public/basic</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<a name="Examples"></a>
+<h3>Examples</h3>
+<span>Potential Examples:</span>
+
+<span> </span>
+<ul>
+	<li><span>Garage sales on craigslist</span></li>
+	<li><span>Homeowners: Open Houses </span></li>
+	<li><span>Chicago Summer Festivals</span></li>
+	<li><span>Tour schedule for bands</span></li>
+</ul>
+<span>Actual Working Examples</span>
+<ul>
+	<li><a class="actionable" href="http://chadnorwood.com/gcm/?ed=180&amp;u=https://www.google.com/calendar/feeds/dnr6osjdrtn4fqpf70ep8ck1rc%40group.calendar.google.com/public/basic">Chad's Chicago: Summer Festivals and More</a></li>
+	<li><a class="actionable" href="http://chadnorwood.com/gcm/?u=http://www.google.com/calendar/feeds/jo0ubvoi1gutr95kdtl1245u3g@group.calendar.google.com/public/basic">A New York Track Club</a></li>
+	<li><a class="actionable" href="http://chadnorwood.com/gcm/?sd=2011-01-01&amp;ed=2011-12-31&amp;u=http://www.google.com/calendar/feeds/asa5k2phscdna68j9e5410v6mc@group.calendar.google.com/public/basic">2011 Trail Races</a></li>
+</ul>
+<a name="Screenshots"></a>
+<h3>Screenshots</h3>
+<span>more here</span>
+
+<a name="InfluencesRelated"></a>
+<h3>Influences and Related</h3>
+<ul>
+	<li><span>UI</span>
+<ul>
+	<li><span>Google.  Duh.</span></li>
+	<li><span>kayak.com filters</span></li>
+	<li><span>padmapper.com</span></li>
+</ul>
+</li>
+	<li><span>Code</span>
+<ul>
+	<li><span>jquery</span></li>
+	<li><span>jquery-ui</span></li>
+</ul>
+</li>
+</ul>
+<span>As of September 2010, this is very much a prototype.  That means lots of trying out things to see what works. There are many bits and pieces from other projects, more details coming soon.</span>
+
+<a name="BrowserCompatibility"></a>
+<h3>Browser Compatibility</h3>
+<span>Tested to work with the following browsers:</span>
+<ul>
+	<li><span>Safari 5</span></li>
+	<li><span>Chrome on Mac</span></li>
+	<li><span>Firefox 3.6</span></li>
+	<li><span>IE8</span></li>
+	<li><span>IE7 (sorta, must scroll to right)</span></li>
+</ul>
+<a name="WishList"></a>
+<h3>Wish List</h3>
+<ul>
+	<li><span>Text box as a Filter</span>
+<ul>
+	<li><span>type chars in a box and only events that contain those chars will show</span></li>
+</ul>
+</li>
+	<li><span>Code cleanup</span>
+<ul>
+	<li><span>Lots here</span></li>
+</ul>
+</li>
+</ul>
+<a name="Changelog"></a>
+<h3>Changelog</h3>
+<span>2009-6-12 - Initial release of prototype</span>
+<span>2009-8-4 - change to 200 max events (from 25)</span>
+<span>2009-11-19 - updated to work with new google maps api .</span>
+<span>2010-01 - made a test version using date sliders.</span>
+<span>2010-6-20 - </span><a href="http://github.com/chadn/jquery-ui/commit/3f4c5bcf05fbf4d182c89f84f670384222150d89"><span>fixed slider handles</span></a><span> so they do not overlap.</span>
+<span>2010-9-12 - Second version of GCM prototype.  Initial one moved to <a href="http://chadnorwood.com/gcm2009/">gcm2009</a>.</span>
+<span>2011-1-9 - Added basic support for recurring events.</span>
+<span>2011-3-29 - Finished some under-the-hood coding and released source code as <a href="https://github.com/chadn/mapfilter">mapfilter project on github</a>.  Read more on the <a href="http://chadnorwood.com/2011/03/30/gcm-on-github/">GCM on github</a> blog post.</span>
+<span>2011-9-21 - Added timezone support.  See details in <a href="#urlOptions">URL Options</a> above.</span>
+<span>2012-4-8 - Added Multiple Calendar support.  See details in <a href="#urlOptions">URL Options</a> above.</span>
