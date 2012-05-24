@@ -1,9 +1,9 @@
 CHANGELOG
 =========
 
-This file: https://github.com/chadn/mapfilter/blob/development/changelog.rst
-Project homepage: http://chadnorwood.com/projects/gcm/
-Working example: http://chadnorwood.com/gcm/
+* This file: https://github.com/chadn/mapfilter/blob/development/changelog.rst
+* Project homepage: http://chadnorwood.com/projects/gcm/
+* Working example: http://chadnorwood.com/gcm/
 
 
 2012-5-23 tag 0.3
@@ -34,16 +34,16 @@ Working example: http://chadnorwood.com/gcm/
 2011-9-21 tag 0.1, from start in 2009
 -------------------------------------
 
-The following was originally on the project homepage, http://chadnorwood.com/projects/gcm/
-2009-6-12 - Initial release of prototype
-2009-8-4 - change to 200 max events (from 25)
-2009-11-19 - updated to work with new google maps api.
-2010-01 - made a test version using date sliders.
-2010-6-20 - fixed slider handles so they do not overlap.
-2010-9-12 - Second version of GCM prototype.  Initial one moved to gcm2009.
-2011-1-9 - Added basic support for recurring events.
-2011-3-29 - Finished some under-the-hood coding and released source code as mapfilter project on github. Read more on the GCM on github blog post.
-2011-9-21 - Added timezone support. See details in URL Options above.
+* The following was originally on the project homepage, http://chadnorwood.com/projects/gcm/
+* 2009-6-12 - Initial release of prototype
+* 2009-8-4 - change to 200 max events (from 25)
+* 2009-11-19 - updated to work with new google maps api.
+* 2010-01 - made a test version using date sliders.
+* 2010-6-20 - fixed slider handles so they do not overlap.
+* 2010-9-12 - Second version of GCM prototype.  Initial one moved to gcm2009.
+* 2011-1-9 - Added basic support for recurring events.
+* 2011-3-29 - Finished some under-the-hood coding and released source code as mapfilter project on github. Read more on the GCM on github blog post.
+* 2011-9-21 - Added timezone support. See details in URL Options above.
 
 
 
