@@ -5,6 +5,14 @@ CHANGELOG
 * Project homepage: http://chadnorwood.com/projects/gcm/
 * Working example: http://chadnorwood.com/gcm/
 
+2012-6-6 
+----------
+
+* sliders update - For IE, FF12+, and iPad, switched default to using "overlapping sliders", which is how the latest jqueryUI slider code works.
+  Originally the slider handles could be dragged up until they touched, but would not overlap.
+  Overlapping slider handles can be forced on by setting ``os=1`` in URL parameters. 
+  Likewise, the original slider behavior can be forced on by setting ``os=0`` in URL parameters.  Example:
+  http://chadnorwood.com/gcm/?gc=asa5k2phscdna68j9e5410v6mc@group.calendar.google.com&ed=5&os=0
 
 2012-5-23 tag 0.3
 ------------------

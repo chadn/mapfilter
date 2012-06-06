@@ -143,7 +143,7 @@ $(document).ready(function() {
 	//
 	// init mapFilter via UI wrapper
 	//
-	cnMFUI.init({
+	var opts = {
 		// For more info on options, see 'defaults'
 		mapId: "map_id",
 		listId: "tableTab",
@@ -166,7 +166,12 @@ $(document).ready(function() {
 			msg = "<a href='"+ genLink(curData)+"' class='jumpLink' title='Click to load URL of this map in its current state (same zoom, coords, start and end dates). Copy and paste it for email, IM, etc.'>Map Link</a>";
 			$("#MapStatus").append(msg);
 		}
-	});
+	};
+	if (myURL.params.os) {
+		opts.useOverlappingSliders = (myURL.params.os == 1);  // sliderChad is not overlapping sliders (os) 
+	}
+	cnMFUI.init(opts);
+	
 }); // end document ready
 
 ;(function($) {
@@ -181,7 +186,6 @@ $(document).ready(function() {
 		scrollbarWidth: 17, // for winXP style
 		maintainPosition:false // this forces it to scroll to top when table is updated
 	}; // demo-1.2.3/scrollToSpeed.html
-
 
   /*
    * main init function
@@ -481,7 +485,10 @@ $(document).ready(function() {
 			// http://dev.jqueryui.com/ticket/3467
 			// example of not overlapping - kayak - and mootools
 			// http://developer.expressionz.in/downloads/mootools_double_pinned_slider_with_clipped_gutter_image_v2.2/slider_using_mootols_1.2.html
-			debug.log("jQuery.browser.version ", jQuery.browser.version);
+			// 2012 Update: overlapping version has bug fixes and works better on latest firefox and IE, so added an option useOverlappingSliders
+			//debug.log("useOverlappingSliders="+ cnMFUI.opts.useOverlappingSliders +", jQuery.browser: ", $(jQuery.browser).serialize() );
+			//$.getJSON("/debug.mobile", {useOverlappingSliders:cnMFUI.opts.useOverlappingSliders,jQueryBrowser:jQuery.browser});
+			
 			var sliderOptions = {
 				range:true,
 				min: cnMF.origStartDay,
@@ -504,7 +511,7 @@ $(document).ready(function() {
 					//updateResults();
 				}
 			};
-			if (jQuery.browser.msie && jQuery.browser.version == '9.0') {
+			if (cnMFUI.opts.useOverlappingSliders) {
 				$('#'+sliderId).slider( sliderOptions);
 			} else {
 				$('#'+sliderId).sliderChad( sliderOptions);
@@ -537,7 +544,7 @@ $(document).ready(function() {
 			debug.log('updateSlider('+elemId+') '+cnMF.curStartDay, cnMF.curEndDay, cnMF);
 
 			sliderId = elemId + "Slider";
-			if (jQuery.browser.msie && jQuery.browser.version == '9.0') {
+			if (cnMFUI.opts.useOverlappingSliders) {
 				$('#'+sliderId).slider("option", "values", [cnMF.curStartDay,cnMF.curEndDay]);
 			} else {
 				$('#'+sliderId).sliderChad("option", "values", [cnMF.curStartDay,cnMF.curEndDay]);
@@ -1100,7 +1107,6 @@ $(document).ready(function() {
 		}
 
 
-
 		  // TODO: remove this?
 		function getXmlData () {
 			// jsoncallback=?
@@ -1573,6 +1579,11 @@ $(document).ready(function() {
 		mapZoom: 14,
 		mapType: 0,
 		mapAllOnInit: true,
+
+		// sliderChad does not work well on IE, FF12+, and iPad (?)
+		useOverlappingSliders: (jQuery.browser.msie) // IE
+			|| (jQuery.browser.mozilla && parseFloat(jQuery.browser.version) >= 12) // FF12+
+			|| (navigator.userAgent.match(/iPad/i) != null), // iPad
 
 		numTableRows: 5
 		// googleApiKey: 'ABQIAAAAQ8l06ldZX6JSGI8gETtVhhTrRIj9DJoJiLGtM4J1SrTlGmVDcxQDT5BVw88R8j75IQxYlwFcEw6w9w' // v2 api for chadnorwood.com
