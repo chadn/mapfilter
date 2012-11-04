@@ -675,11 +675,15 @@
 			var c = {
 				uniqAddrDecoded: 0,
 				uniqAddrErrors: 0,
+				uniqAddrUnknown: 0,
 				uniqAddrTotal: 0
 			}
+			// resolved = uniqAddrDecoded + uniqAddrErrors
+			// uniqAddrUnknown = uniqAddrTotal - resolved 
 			for (var addr in geoCache) {
 				ao = geoCache[addr];
 				c.uniqAddrTotal++;
+				if (!ao.resolved) c.uniqAddrUnknown++;
 				if (ao.resolved && ao.validCoords) c.uniqAddrDecoded++;
 				if (ao.resolved && !ao.validCoords) c.uniqAddrErrors++;
 			}

@@ -1400,7 +1400,10 @@ $(document).ready(function() {
 				// Event Category: Loading  - Event Action: calendars - Event Label: uniqAddrDecoded
 				_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrDecoded', cnMF.reportData.uniqAddrDecoded]);
 				_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrTotal', cnMF.reportData.uniqAddrTotal]);
+				_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrUnknown', cnMF.reportData.uniqAddrUnknown]);
 				_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrErrors', cnMF.reportData.uniqAddrErrors]);
+				_gaq.push(['_trackEvent', 'Loading', 'calenders', 'uniqAddrErrorPercent', 
+					Math.round(10000*cnMF.reportData.uniqAddrErrors/cnMF.reportData.uniqAddrTotal)/100 ]);
 				_gaq.push(['_trackEvent', 'Loading', 'calenders', 'totalGeoDecodes', 1]);
 				_gaq.push(['_trackEvent', 'Loading', 'calenders', 'totalGeoDecodeMsecs', decodeMs]); // so we can find avg decode time
 				_gaq.push(['_trackEvent', 'Loading', 'calenders', 'calendarCount', calendarURLs.length]);  // we can find avg decode time per calendar
@@ -1607,8 +1610,8 @@ $(document).ready(function() {
 		cnMF.myGeo.addr2coords( address, function (gObj) {
 			if (gObj.lt) {
 				if (typeof(kk) == 'object') {
-				kk.lt = gObj.lt;
-				kk.lg = gObj.lg;
+					kk.lt = gObj.lt;
+					kk.lg = gObj.lg;
 				}
 				jumptxt = '';
 				myGmap.setCenter(new google.maps.LatLng(gObj.lt, gObj.lg) ); 
