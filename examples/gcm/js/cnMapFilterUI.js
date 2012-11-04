@@ -379,7 +379,8 @@ $(document).ready(function() {
 				return false;
 			});
 			
-			$('body').on('click','a.event_table', function(){
+			$('body').on('click touch','a.event_table', function(){
+				//$.getJSON("/debug.mobile", {'touch':'event_table index='+$(this).data('event_index')});
 				eventClicked( cnMF.getEventObj($(this).data('event_index')) ); 
 				_gaq.push(['_trackEvent', 'Interaction', 'a.event_table']);
 				userInteraction.recordInteraction();
