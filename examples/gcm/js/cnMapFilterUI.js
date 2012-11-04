@@ -354,7 +354,7 @@ $(document).ready(function() {
 				+ '            <div id="resultsDataFilters"></div>'
 				+ '            <div id="resultsDataStatus"></div>'
 				+ '        </div>'
-				+ '        <div id="ResultsMapHdr"></div>'
+				+ '        <div id="ResultsMapHdr" class="transparent"></div>'
 				+ '        <div id="ResultsMapEvents"></div>'
 				+ '        <div id="ResultsMapUnknown"></div>'
 				+ '    </div>'
@@ -811,7 +811,7 @@ $(document).ready(function() {
 					+ "<th title='Click to Sort by Event Location'>Where</th>"
 					+ "</tr></thead><tbody><tr>"+emptyTableHtml+"</tr></tbody></table>";
 			pagerHtml = "<div id='"+divId+"Pager'>"+$("#pager").html()+"</div>";
-			pagerHtml = '<p> Thats All!</p>';
+			pagerHtml = '';
 			$('#' + divId).html(tableHtml+pagerHtml);
 
 			//$('#' + divId +"Pager .pagesize").val(cnMFUI.opts.numTableRows); // rows in table
