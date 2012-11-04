@@ -705,6 +705,9 @@
 		function deDup(addresses) {
 			var uniqAddresses = {}, // stores addr objects
 				ret = [];
+			if (typeof addresses == 'string') {
+				return [addresses]
+			}
 			for (var ii in addresses) {
 				if (!(ii.length > 0)) {
 					debug.warn("**** geocodeManager-geoMgrInit() skipping blank address");
@@ -1131,6 +1134,8 @@
 		},
 		timeOuts : timeOuts,
 		/*
+		 * Syntax is a drop-in replacement plus more params
+		 *
 		 *        window.setTimeout(doFunction(), 300);
 		 * cnMF.throttle.setTimeout(doFunction(), 300, "updateUI", "afterLast");
 		 */

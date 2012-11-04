@@ -1606,8 +1606,10 @@ $(document).ready(function() {
 
 		cnMF.myGeo.addr2coords( address, function (gObj) {
 			if (gObj.lt) {
+				if (typeof(kk) == 'object') {
 				kk.lt = gObj.lt;
 				kk.lg = gObj.lg;
+				}
 				jumptxt = '';
 				myGmap.setCenter(new google.maps.LatLng(gObj.lt, gObj.lg) ); 
 				myGmap.setZoom(cZoom);
@@ -1618,7 +1620,7 @@ $(document).ready(function() {
 				jumptxt = "NOT FOUND: "+ address;
 				$("#jumpBox").val(jumptxt);
 			}
-		});
+		}, null);
 	},
 
 	htmlEncode:	function (value){
