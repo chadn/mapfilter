@@ -859,7 +859,7 @@ $(document).ready(function() {
 
 				rowHTML += onlyValidCoords 
 					? '<td><a class="actionable" href="javascript:void(0)" title="Original Address: ' 
-						+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.addrOrig, 100, 0, '', 0)) + '">'+ kk.addrFromGoogle +'</a>)</td>'
+						+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.addrOrig, 100, 0, '', 0)) + '">'+ kk.addrFromGoogle +'</a></td>'
 					: '<td>'+(kk.addrOrig.match(/\w/) ? kk.addrOrig : '[empty]' );
 				rowHTML += '<br><a href="' + kk.url + '" title="Click to edit this event (if you have permission) in a new window"'
 					+' target="_blank">Edit Event Address</a><br>Error: ' + kk.error + '</td>';
