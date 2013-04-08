@@ -10,3 +10,4 @@ My first working example is GCM - Google Calendar Map.  It uses a google calenda
 
 The example code is messy.  I wanted to get something up and running so i can experiment with features. My methods often involved pasting code from other sources, so forgive me for the quality of the code.  I only recently pulled out some of the core javascript, cleaned it up, and put it in the src directory. It still could use some work, and i welcome suggestions.
 
+[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/6280089702654e2e4bd7e4dc622097df "githalytics.com")](http://githalytics.com/chadn/mapfilter)
