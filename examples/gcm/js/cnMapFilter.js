@@ -68,7 +68,7 @@
 		return this.validCoords ?  this.lt + "," + this.lg : '';
 	};
 	EventClass.prototype.getDirectionsUrlStr = function(){
-		return 'http://maps.google.com/maps?f=d&q=' + this.addrToGoogle.replace(/ /g, '+').replace(/"/g, '%22');
+		return 'http://maps.google.com/maps?q=' + this.addrToGoogle.replace(/ /g, '+').replace(/"/g, '%22');
 	};
 	EventClass.prototype.insideCurMap = function(mapbox){
 		return this.validCoords ? mapbox.contains(new google.maps.LatLng(this.lt, this.lg)) : false;
