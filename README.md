@@ -10,4 +10,13 @@ My first working example is GCM - Google Calendar Map.  It uses a google calenda
 
 The example code is messy.  I wanted to get something up and running so i can experiment with features. My methods often involved pasting code from other sources, so forgive me for the quality of the code.  I only recently pulled out some of the core javascript, cleaned it up, and put it in the src directory. It still could use some work, and i welcome suggestions.
 
+### Google Calendar V3 ###
+
+On Nov 17, 2014, Google deprecated v1 and v2 (src|http://googleappsupdates.blogspot.com/2014/10/deprecated-google-calendar-apis-v1-v2.html)
+
+In December 2014, GCM was updated to use v3.  One of the key things in v3 is usage limits.  These are controlled by either API keys (simple, public calendars only) or OAuth (more complicated, but can get private calendar data).  GCM uses API keys, which are tied to domains. Therefore, *If you run this from any domain besides chadnorwood.com, you need to generate your own API key*  
+(more info|https://developers.google.com/api-client-library/javascript/start/start-js#Setup)
+
+
+
 [![githalytics.com alpha](https://cruel-carlota.pagodabox.com/6280089702654e2e4bd7e4dc622097df "githalytics.com")](http://githalytics.com/chadn/mapfilter)

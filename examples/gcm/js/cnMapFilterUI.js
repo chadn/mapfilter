@@ -1230,14 +1230,6 @@ $(document).ready(function() {
 			  });
 		}
 
-			/*
-			calendarInfo.calendarId = calendarId;
-			calendarInfo.totalEntries = ii;
-			calendarInfo.totalEvents = cdata.feed.openSearch$totalResults.$t || ii;		
-			calendarInfo.gcTitle = cdata.feed.title ? cdata.feed.title['$t'] : 'title unknown';
-			calendarInfo.gcLink = cdata.feed.link ? cdata.feed.link[0]['href'] : '';
-			calendarInfo.desc = cdata.feed.subtitle ? cdata.feed.subtitle['$t'] : 'subtitle unknown';
-			*/
 
 		function cbCalendarLoad(calendarInfo) {
 			var html,

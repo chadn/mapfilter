@@ -5,6 +5,11 @@ CHANGELOG
 * Project homepage: http://chadnorwood.com/projects/gcm/
 * Working example: http://chadnorwood.com/gcm/
 
+2014-12-3
+----------
+
+* switched to Google Calendars API v3
+
 2012-6-6 
 ----------
 

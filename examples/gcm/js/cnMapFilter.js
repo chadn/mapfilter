@@ -343,14 +343,6 @@
 		cnMF.calData[calendarId] = calData;
 
 		//$.extend(cnMF, calData); // TODO2 this overwrites, figure out better way to display multiple calendar names
-		/*
-		calendarInfo.calendarId = calendarId;
-		calendarInfo.totalEntries = ii;
-		calendarInfo.totalEvents = cdata.feed.openSearch$totalResults.$t || ii;		
-		calendarInfo.gcTitle = cdata.feed.title ? cdata.feed.title['$t'] : 'title unknown';
-		calendarInfo.gcLink = cdata.feed.link ? cdata.feed.link[0]['href'] : '';
-		calendarInfo.desc = cdata.feed.subtitle ? cdata.feed.subtitle['$t'] : 'subtitle unknown';
-		*/
 	}
 
 
@@ -522,16 +514,16 @@
 		// https://developers.google.com/google-apps/calendar/v3/reference/#Events
 		// list events: GET /calendars/calendarId/events
 		// https://developers.google.com/apis-explorer/#s/calendar/v3/calendar.events.list?calendarId=dnr6osjdrtn4fqpf70ep8ck1rc%2540group.calendar.google.com&_h=1&
-
-		//https://content.googleapis.com/calendar/v3/calendars/dnr6osjdrtn4fqpf70ep8ck1rc%40group.calendar.google.com/events?key=AIzaSyCFj15TpkchL4OUhLD1Q2zgxQnMb7v3XaM
+		// TODO: support 'nextPageToken' for multi-page response
+		// https://developers.google.com/google-apps/calendar/v3/reference/events/list
+		// http://googleappsdeveloper.blogspot.com/2011/12/calendar-v3-best-practices-recurring.html
 		gCalObj = {
-			'key':'AIzaSyCdpWK6w91IDKmaGtbhPkPtWrZfroi07WQ', // Google API Key 
-			'start-min': startmin,
-			'start-max': startmax,
-			'max-results': 200,
-			'orderby'  : 'starttime',
-			'sortorder': 'ascending',
-			'singleevents': false
+			'timeMin': startmin,
+			'timeMax': startmax,
+			'max-results': 250, // default, can go up to 2500
+			//'orderBy'  : 'startTime',
+			'singleevents': true,
+			'key':'AIzaSyCdpWK6w91IDKmaGtbhPkPtWrZfroi07WQ' // Google API Key for chadnorwood.com
 		};
 		if (cnMF.tz.name != 'unknown') {
 			gCalObj.ctz = cnMF.tz.name; // ex: 'America/Chicago'
@@ -543,7 +535,7 @@
 			data: gCalObj,
 			timeout: 12000, // 12 secs
 			success: function(cdata) {
-				parseGCalData(calendarId, cdata, startDate, endDate, callbacks);
+				cnMF.parseGCalData(calendarId, cdata, startDate, endDate, callbacks);
 			}, 
 			complete: function (jqXHR, textStatus) {
 				if (textStatus !== 'success') {
@@ -556,27 +548,28 @@
 		});
 	}
 
-	function parseGCalData (calendarId, cdata, startDate, endDate, callbacks ) {
+	cnMF.parseGCalData = function parseGCalData (calendarId, cdata, startDate, endDate, callbacks ) {
 		var calendarInfo = {},
 		    uniqAddr = {};
 
 		debug.debug(" parseGCalData() calendar data: ",cdata);
 
 		calendarInfo.calendarId = calendarId;
-		calendarInfo.gcTitle = cdata.feed.title ? cdata.feed.title['$t'] : 'title unknown';
+		calendarInfo.gcTitle = cdata.summary || 'title unknown';
 		calendarInfo.gcTitle.replace(/"/,'&quot;');
-		calendarInfo.gcLink = cdata.feed.link ? cdata.feed.link[0]['href'] : '';
-		calendarInfo.desc = cdata.feed.subtitle ? cdata.feed.subtitle['$t'] : 'subtitle unknown';
+		calendarInfo.desc = cdata.description || '';
+		calendarInfo.gcLink = 'https://www.google.com/calendar/embed?src='+ calendarId;
 		
 		// TODO2 move this to a method
 		if (!cnMF.tz.computedFromBrowser) {
-			cnMF.tz.name = cdata.feed.gCal$timezone.value;
+			cnMF.tz.name = cdata.timezone;
 			debug.debug(" Displaying calendar times using calendar timezone: "+ cnMF.tz.name);
 			// TODO2 count in analytics how many people use timezones in browser vs calendar
 		}
 
-		for (var ii=0; cdata.feed.entry && cdata.feed.entry[ii]; ii++) {
-			var curEntry = cdata.feed.entry[ii];
+		for (var ii=0; cdata.items && cdata.items[ii]; ii++) {
+			var curEntry = cdata.items[ii];
+			/*
 			if (!(curEntry['gd$when'] && curEntry['gd$when'][0]['startTime'])) {
 				debug.debug(" skipping cal curEntry (no gd$when) %s (%o)", curEntry['title']['$t'], curEntry);
 				continue;
@@ -590,17 +583,23 @@
 					url[curLink.rel] = curLink.href;
 				}
 			}
+			*/
+			// https://developers.google.com/google-apps/calendar/v3/reference/events#resource
+			if (curEntry.endTimeUnspecified) {
+				debug.debug('Note that endTimeUnspecified==true ', curEntry);
+			}
 			kk = cnMF.addEvent({
 				//type: eType.id,
 				calTitle: calendarInfo.gcTitle,
-				name: curEntry['title']['$t'],
-				desc: curEntry['content']['$t'],
-				addrOrig: curEntry['gd$where'][0]['valueString'] || '',  // addrOrig is the location field of the event
-				addrToGoogle: curEntry['gd$where'][0]['valueString'] || '',
-				gCalId: curEntry['gCal$uid']['value'],
-				url: url.related || url.alternate, // TODO - is this what we want? see href above
-				dateStart: cnMF.parseDate(curEntry['gd$when'][0]['startTime']),
-				dateEnd: cnMF.parseDate(curEntry['gd$when'][0]['endTime'])
+				name: curEntry.summary,
+				desc: curEntry.description,
+				addrOrig: curEntry.location || '',  // addrOrig is the location field of the event
+				addrToGoogle: curEntry.location || '',
+				gCalId: curEntry.iCalUID,  // or 'id'
+				//url: url.related || url.alternate, // TODO - is this what we want? see href above
+				url: curEntry.htmlLink || '',
+				dateStart: cnMF.parseGCalDate(curEntry.start, 'start'),
+				dateEnd: cnMF.parseGCalDate(curEntry.end, 'end')
 			});
 			// make ready for geocode TODO: remove this? or move this line to addrToGoogle above
 			kk.addrToGoogle = kk.addrToGoogle.replace(/\([^\)]+\)\s*$/, ''); // remove parens and text inside parens
@@ -612,7 +611,7 @@
 			debug.log("parsed curEntry "+ii+": ", kk.name, curEntry, kk);
 		}
 		calendarInfo.totalEntries = ii;
-		calendarInfo.totalEvents = cdata.feed.openSearch$totalResults.$t || ii;		
+		calendarInfo.totalEvents = ii;		
 		cnMF.addCal(calendarId, calendarInfo);
 		cnMF.reportData['fn'] = calendarInfo.gcTitle.replace(/\W/,"_");
 
@@ -632,6 +631,31 @@
 		if ('function' === typeof callbacks.onCalendarLoad) {
 			callbacks.onCalendarLoad(calendarInfo);
 		}
+	}
+	
+	/**
+	 * Converts google date object to javascript date object
+	 * @param {object} gCalDate google's date object used in event items.
+	 * @param {string} startEnd either 'start' or 'end'.
+	 * @return {object} js date object
+	 */
+	cnMF.parseGCalDate = function parseGCalDate (gCalDate, startEnd) {
+		// https://developers.google.com/google-apps/calendar/v3/reference/events#resource
+		if (gCalDate.dateTime) {
+			// ex: 2011-03-31T19:00:49.000Z
+			if (gCalDate.timeZone) {
+				debug.log("ignoring event timezone: ", gCalDate.timeZone );
+			}
+			return cnMF.parseDate(gCalDate.dateTime);
+		} 
+		if (gCalDate.date) {
+			// all-day event
+			if ('end' === startEnd) {
+				return cnMF.parseDate(gCalDate.date + 'T23:59:59.000Z');
+			} else {
+				return cnMF.parseDate(gCalDate.date + 'T00:00:01.000Z');
+			}
+		} 
 	}
 
 
