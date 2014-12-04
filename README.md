@@ -17,6 +17,13 @@ On Nov 17, 2014, Google deprecated v1 and v2 [src](http://googleappsupdates.blog
 In December 2014, GCM was updated to use v3.  One of the key things in v3 is usage limits.  These are controlled by either API keys (simple, public calendars only) or OAuth (more complicated, but can get private calendar data).  GCM uses API keys, which are tied to domains. Therefore, **If you run this from any domain besides chadnorwood.com, you need to generate your own API key**
 - [more info](https://developers.google.com/api-client-library/javascript/start/start-js#Setup)
 
+### License ###
+
+This code is released under the terms of the [MIT license](LICENSE).
+
+The MIT License is simple and easy to understand and it places almost no restrictions on what you can do.
+You are free to use in any other project (even commercial projects) as long as the copyright header is left intact.
+
 
 
 [![githalytics.com alpha](https://cruel-carlota.pagodabox.com/6280089702654e2e4bd7e4dc622097df "githalytics.com")](http://githalytics.com/chadn/mapfilter)
