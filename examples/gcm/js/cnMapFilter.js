@@ -334,17 +334,17 @@
 		return x;
 	}
 
-	cnMF.addCal = function(gCalUrl, calData){ 
-		// console.log("cnMF.addCal", gCalUrl, calData);
+	cnMF.addCal = function(calendarId, calData){ 
+		// console.log("cnMF.addCal", calendarId, calData);
 		
 		if (!cnMF.calData) {
 			cnMF.calData = {};
 		}
-		cnMF.calData[gCalUrl] = calData;
+		cnMF.calData[calendarId] = calData;
 
 		//$.extend(cnMF, calData); // TODO2 this overwrites, figure out better way to display multiple calendar names
 		/*
-		calendarInfo.gCalUrl = gCalUrl;
+		calendarInfo.calendarId = calendarId;
 		calendarInfo.totalEntries = ii;
 		calendarInfo.totalEvents = cdata.feed.openSearch$totalResults.$t || ii;		
 		calendarInfo.gcTitle = cdata.feed.title ? cdata.feed.title['$t'] : 'title unknown';
@@ -503,12 +503,9 @@
 	}
 
 
-	cnMF.getGCalData = function(gCalUrl, startDays, endDays, callbacks ) {
-		if (gCalUrl.search(/^http/i) < 0) {
-			debug.warn("**** getGCalData(): bad url: "+ gCalUrl);
-			return;
-		}
-		gCalUrl = gCalUrl.replace(/\/basic$/, '/full');
+	cnMF.getGCalData = function getGCalData(calendarId, startDays, endDays, callbacks ) {
+		var gCalUrl = 'https://content.googleapis.com/calendar/v3/calendars/'+ calendarId +'/events';
+		
 		//startmax = '2009-07-09T10:57:00-08:00';
 
 		// TODO: change rfc3339 to accept StartDays
@@ -522,8 +519,13 @@
 		startmax = cnMF.rfc3339(endDate,true);
 		debug.debug(" getGCalData(): start-max: "+startmax);
 
-		// http://code.google.com/apis/calendar/docs/2.0/reference.html
+		// https://developers.google.com/google-apps/calendar/v3/reference/#Events
+		// list events: GET /calendars/calendarId/events
+		// https://developers.google.com/apis-explorer/#s/calendar/v3/calendar.events.list?calendarId=dnr6osjdrtn4fqpf70ep8ck1rc%2540group.calendar.google.com&_h=1&
+
+		//https://content.googleapis.com/calendar/v3/calendars/dnr6osjdrtn4fqpf70ep8ck1rc%40group.calendar.google.com/events?key=AIzaSyCFj15TpkchL4OUhLD1Q2zgxQnMb7v3XaM
 		gCalObj = {
+			'key':'AIzaSyCdpWK6w91IDKmaGtbhPkPtWrZfroi07WQ', // Google API Key 
 			'start-min': startmin,
 			'start-max': startmax,
 			'max-results': 200,
@@ -536,16 +538,16 @@
 			debug.debug(" Displaying calendar times using this timezone: "+ gCalObj.ctz);
 		}
 		$.ajax({
-			url: gCalUrl + "?alt=json-in-script&callback=?",
+			url: gCalUrl + "?callback=?",
 			dataType: 'json',
 			data: gCalObj,
 			timeout: 12000, // 12 secs
 			success: function(cdata) {
-				parseGCalData(gCalUrl, cdata, startDate, endDate, callbacks);
+				parseGCalData(calendarId, cdata, startDate, endDate, callbacks);
 			}, 
 			complete: function (jqXHR, textStatus) {
 				if (textStatus !== 'success') {
-					debug.warn("**** getGCalData problem: ", textStatus, gCalUrl, jqXHR);
+					debug.warn("**** getGCalData problem: ", textStatus, calendarId, jqXHR);
 					if ('function' === typeof callbacks.onError) {
 						callbacks.onError(jqXHR, textStatus);
 					}
@@ -554,13 +556,13 @@
 		});
 	}
 
-	function parseGCalData (gCalUrl, cdata, startDate, endDate, callbacks ) {
+	function parseGCalData (calendarId, cdata, startDate, endDate, callbacks ) {
 		var calendarInfo = {},
 		    uniqAddr = {};
 
 		debug.debug(" parseGCalData() calendar data: ",cdata);
 
-		calendarInfo.gCalUrl = gCalUrl;
+		calendarInfo.calendarId = calendarId;
 		calendarInfo.gcTitle = cdata.feed.title ? cdata.feed.title['$t'] : 'title unknown';
 		calendarInfo.gcTitle.replace(/"/,'&quot;');
 		calendarInfo.gcLink = cdata.feed.link ? cdata.feed.link[0]['href'] : '';
@@ -611,7 +613,7 @@
 		}
 		calendarInfo.totalEntries = ii;
 		calendarInfo.totalEvents = cdata.feed.openSearch$totalResults.$t || ii;		
-		cnMF.addCal(gCalUrl, calendarInfo);
+		cnMF.addCal(calendarId, calendarInfo);
 		cnMF.reportData['fn'] = calendarInfo.gcTitle.replace(/\W/,"_");
 
 		debug.log("calling mapfilter.geocode(): ", uniqAddr );

@@ -224,7 +224,7 @@ $(document).ready(function() {
 		function init() {
 
 			var timezone = jstz.determine_timezone(); // https://bitbucket.org/pellepim/jstimezonedetect/wiki/Home
-			var calendarURLs = getCalendarURLs();
+			var calendarIds = getCalendarIds();
 			debug.log('mapfilter().init(), cnMF:',cnMF);
 			myGmap = initGMap();
 			userInteraction.init();
@@ -257,29 +257,29 @@ $(document).ready(function() {
 
 			// check for data sources and add them
 			//
-			if (calendarURLs.length) {
+			if (calendarIds.length) {
 				$('#calendarTitleContent').html("<h3><a href=''>Fetching Calendar.. </a></h3>");
-				updateStatus('Map Loaded, Fetching '+ calendarURLs.length +' Calendar(s) ..');
+				updateStatus('Map Loaded, Fetching '+ calendarIds.length +' Calendar(s) ..');
 				//$('#calendarDiv').html('');
 				initResults();
-				calendarsDecoding = calendarURLs.length;
-				for (var ii = 0; ii < calendarURLs.length; ii++) {
-					var gCalURL = calendarURLs[ii];
+				calendarsDecoding = calendarIds.length;
+				for (var ii = 0; ii < calendarIds.length; ii++) {
+					var calendarId = calendarIds[ii];
 					// TODO: create a cnMF.showDates(start,end) which gets from google calendar if required
-					if (gCalURL == 'test1') {
+					if (calendarId == 'test1') {
 						fakeGCalData();
-					} else if (gCalURL == 'test2') {
+					} else if (calendarId == 'test2') {
 						getXmlData();
 					} else {
-						_gaq.push(['_trackEvent', 'Loading', 'cal-begin', gCalURL]);
-						cnMF.getGCalData(gCalURL, cnMF.origStartDay, cnMF.origEndDay, {
+						_gaq.push(['_trackEvent', 'Loading', 'cal-begin', calendarId]);
+						cnMF.getGCalData(calendarId, cnMF.origStartDay, cnMF.origEndDay, {
 								onCalendarLoad: cbCalendarLoad,
 								onGeoDecodeAddr: cbGeoDecodeAddr,
 								onGeoDecodeComplete: function() {
-									cbGeoDecodeComplete(gCalURL, calendarURLs)
+									cbGeoDecodeComplete(calendarId, calendarIds)
 								},
 								onError: function(jqXHR, textStatus) {
-									_gaq.push(['_trackEvent', 'Loading', 'cal-error', textStatus + ": "+ gCalURL]);
+									_gaq.push(['_trackEvent', 'Loading', 'cal-error', textStatus + ": "+ calendarId]);
 								}
 							});
 					}
@@ -302,31 +302,31 @@ $(document).ready(function() {
 			}
 		}
 
-		function getCalendarURLs() {
-			var calendarURLs = [],
+		function getCalendarIds() {
+			var calendarIds = [],
 			    tmp;
 		
-			if (cnMFUI.opts.gCalURLs) {
-				if (Object.prototype.toString.call(cnMFUI.opts.gCalURLs) != '[object Array]') {
-					debug.error("gCalURLs must be an array, not "+ typeof cnMFUI.opts.gCalURLs, cnMFUI.opts.gCalURLs);
+			if (cnMFUI.opts.gCalUrls) {
+				if (Object.prototype.toString.call(cnMFUI.opts.gCalUrls) != '[object Array]') {
+					debug.error("gCalUrls must be an array, not "+ typeof cnMFUI.opts.gCalUrls, cnMFUI.opts.gCalUrls);
 					return [];
 				}
-				for (var ii = 0; ii < cnMFUI.opts.gCalURLs.length; ii++) {
-					tmp =  cnMFUI.opts.gCalURLs[ii];
+				for (var ii = 0; ii < cnMFUI.opts.gCalUrls.length; ii++) {
+					tmp =  cnMFUI.opts.gCalUrls[ii];
 					if (tmp.match(/\%/)) {
 						tmp = unescape(tmp);
 					}
-					calendarURLs.push(tmp);
+					calendarIds.push(tmp);
 				}
 			}
 			if (cnMFUI.opts.gCalGroups) { // gcg=xxx,yyy
 				$.each(cnMFUI.opts.gCalGroups.split(','), function(index, value) { 
-					calendarURLs.push("https://www.google.com/calendar/feeds/"+ value + "@group.calendar.google.com/public/basic");
+					calendarIds.push(value + "@group.calendar.google.com");
 				});
 			}
 			if (cnMFUI.opts.gCalImports) { // gci=xxx,yyy
 				$.each(cnMFUI.opts.gCalImports.split(','), function(index, value) { 
-					calendarURLs.push("https://www.google.com/calendar/feeds/"+ value + "@import.calendar.google.com/public/basic");
+					calendarIds.push(value + "@import.calendar.google.com");
 				});
 			}
 			if (cnMFUI.opts.gCalEmails) { // gc=xxx@groups.calendar.google.com,yyy@my.domain.com
@@ -335,11 +335,12 @@ $(document).ready(function() {
 					cnMFUI.opts.gCalEmails = decodeURIComponent((cnMFUI.opts.gCalEmails+'').replace(/\+/g, '')); // %40 to '@'
 				}
 				$.each(cnMFUI.opts.gCalEmails.split(','), function(index, value) {
-					calendarURLs.push("https://www.google.com/calendar/feeds/"+ value + "/public/basic");
+					value = value.replace(/\/$/,"");
+					calendarIds.push(value);
 				});
 			}
-			moreThanOneCal = calendarURLs.length > 1;
-			return calendarURLs;
+			moreThanOneCal = calendarIds.length > 1;
+			return calendarIds;
 		}
 	
 		function initDivs() {
@@ -1115,7 +1116,7 @@ $(document).ready(function() {
 			// jsoncallback=?
 			xmlUrl = 'http://feeds2.feedburner.com/torontoevents?format=xml&jsoncallback=?';
 			if (xmlUrl.search(/^(http|feed)/i) < 0) {
-			  debug.log("getXmlData(): bad url: "+ gCalUrl);
+			  debug.log("getXmlData(): bad url: "+ calendarId);
 			  return;
 			}
 			$.ajax({
@@ -1225,12 +1226,12 @@ $(document).ready(function() {
 				alert('Reloading to url: '+url);
 				window.location = url;
 				//$("#newDates").dialog('close');
-				//getGCalData(cnMFUI.opts.gCalUrl, date2days( $("#startDate").val()), date2days( $("#endDate").val()));
+				//getGCalData(cnMFUI.opts.calendarId, date2days( $("#startDate").val()), date2days( $("#endDate").val()));
 			  });
 		}
 
 			/*
-			calendarInfo.gCalUrl = gCalUrl;
+			calendarInfo.calendarId = calendarId;
 			calendarInfo.totalEntries = ii;
 			calendarInfo.totalEvents = cdata.feed.openSearch$totalResults.$t || ii;		
 			calendarInfo.gcTitle = cdata.feed.title ? cdata.feed.title['$t'] : 'title unknown';
@@ -1244,9 +1245,9 @@ $(document).ready(function() {
 			    totalEvents = 0;
 		
 			cnMF.calData = cnMF.calData || {};
-			cnMF.calData[calendarInfo.gCalUrl] = calendarInfo;
+			cnMF.calData[calendarInfo.calendarId] = calendarInfo;
 		
-			$.each(cnMF.calData, function(gCalUrl, calendarInfo) {
+			$.each(cnMF.calData, function(calendarId, calendarInfo) {
 				totalEvents += calendarInfo.totalEvents;
 				titles.push(calendarInfo.gcTitle);
 			});
@@ -1383,7 +1384,7 @@ $(document).ready(function() {
 			}
 		}
 		// cbGeoDecodeComplete() called once all addresses are decoded for a given calendar
-		function cbGeoDecodeComplete(gCalURL, calendarURLs) {
+		function cbGeoDecodeComplete(calendarId, calendarIds) {
 			debug.log("cbGeoDecodeComplete() begins");
 			//if (cnMFUI.opts.mapCenterLt == cnMFUI.defaults.mapCenterLt)
 
@@ -1393,9 +1394,9 @@ $(document).ready(function() {
 
 			var decodeMs = parseInt(cnMF.reportData.submitTime.replace(/\./,'')) - parseInt(cnMF.reportData.loadTime.replace(/\./,'') );
 
-			_gaq.push(['_trackEvent', 'Loading', 'cal-complete', gCalURL]);
-			_gaq.push(['_trackEvent', 'Loading', 'cal-loadTime', gCalURL, decodeMs]);  // we can find avg decode time per calendar
-			debug.debug(" cbGeoDecodeComplete() calendars decode time:", gCalURL, decodeMs );
+			_gaq.push(['_trackEvent', 'Loading', 'cal-complete', calendarId]);
+			_gaq.push(['_trackEvent', 'Loading', 'cal-loadTime', calendarId, decodeMs]);  // we can find avg decode time per calendar
+			debug.debug(" cbGeoDecodeComplete() calendars decode time:", calendarId, decodeMs );
 
 			calendarsDecoding -= 1;
 			if (calendarsDecoding === 0) {
@@ -1409,11 +1410,11 @@ $(document).ready(function() {
 					Math.round(10000*cnMF.reportData.uniqAddrErrors/cnMF.reportData.uniqAddrTotal)/100 ]);
 				_gaq.push(['_trackEvent', 'Loading', 'calenders', 'totalGeoDecodes', 1]);
 				_gaq.push(['_trackEvent', 'Loading', 'calenders', 'totalGeoDecodeMsecs', decodeMs]); // so we can find avg decode time
-				_gaq.push(['_trackEvent', 'Loading', 'calenders', 'calendarCount', calendarURLs.length]);  // we can find avg decode time per calendar
-				for (var ii in calendarURLs) {
-					_gaq.push(['_trackEvent', 'Loading', 'cal-decoded' + calendarURLs.length, calendarURLs[ii], cnMF.reportData.uniqAddrDecoded] );
-					_gaq.push(['_trackEvent', 'Loading', 'cal-total' + calendarURLs.length, calendarURLs[ii], cnMF.reportData.uniqAddrTotal] );
-					_gaq.push(['_trackEvent', 'Loading', 'cal-errors' + calendarURLs.length, calendarURLs[ii], cnMF.reportData.uniqAddrErrors] );
+				_gaq.push(['_trackEvent', 'Loading', 'calenders', 'calendarCount', calendarIds.length]);  // we can find avg decode time per calendar
+				for (var ii in calendarIds) {
+					_gaq.push(['_trackEvent', 'Loading', 'cal-decoded' + calendarIds.length, calendarIds[ii], cnMF.reportData.uniqAddrDecoded] );
+					_gaq.push(['_trackEvent', 'Loading', 'cal-total' + calendarIds.length, calendarIds[ii], cnMF.reportData.uniqAddrTotal] );
+					_gaq.push(['_trackEvent', 'Loading', 'cal-errors' + calendarIds.length, calendarIds[ii], cnMF.reportData.uniqAddrErrors] );
 				}
 				debug.debug(" cbGeoDecodeComplete() All calendars decoded.", decodeMs, cnMF.reportData );
 			} else {
