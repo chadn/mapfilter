@@ -1634,6 +1634,7 @@ $(document).ready(function() {
 
 	maxStr: function(str, maxChars, maxLines, link, chopLongStrings) {
 		shorten = false;
+		if (!(str && typeof str == 'string')) return '';
 
 		if ((maxChars > 1) && (str.length > maxChars)) {
 		  shorten = true;
