@@ -1013,7 +1013,11 @@ $(document).ready(function() {
 
 
 		function addLinks (txt) {
-			  return txt.replace(/(http:\/\/[^<>\s]+)/gi,'<a href="$1">$1</a>');
+			if (txt && typeof txt == 'string') {
+				return txt.replace(/(http:\/\/[^<>\s]+)/gi,'<a href="$1">$1</a>');				
+			} else {
+				return txt;
+			}
 		}
 
 
