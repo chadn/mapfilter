@@ -850,7 +850,8 @@ $(document).ready(function() {
 
 
 				rowHTML += onlyValidCoords ? 
-					'<td><a class="actionable event_table" data-event_index="'+ kk.id +'" title="Click to show marker on map">'
+					'<td><a class="actionable event_table" data-event_index="'+ kk.id 
+					+ '" title="Click to show marker on map '+ kk.gCalId +'">'
 					+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.name, 100, 0, '', 1)) + "</a></td>"
 					: '<td>'+ cnMFUI.htmlEncode(cnMFUI.maxStr(kk.name, 100, 0, '', 1)) + '</td>';
 
@@ -889,7 +890,6 @@ $(document).ready(function() {
 
 
 	 	 /* TODO: if event is an all day event, represent that instead of currently saying 12a-12am
-			 * TODO: also note recurring (weekly/monthly/etc)
 */
 
 		function getMapType(oMap) {
@@ -1269,9 +1269,11 @@ $(document).ready(function() {
 
 				$('#calendarTitleContent').html("<h3><a title='"+calendarInfo.desc+" - Click to view calendar in new window' "
 					+"class='jumpLink' target='_blank' href='"+ calendarInfo.gcLink +"'>"+ calendarInfo.gcTitle +"</a></h3>"
-					+ '<span>Calendar has '+ calendarInfo.totalEvents + (calendarInfo.totalEvents==calendarInfo.totalEntries ? ''
-						:' (<span class="titleDesc" title="Counted '+calendarInfo.totalEntries+' entries even though feed said '
-						+calendarInfo.totalEvents+' total">'+calendarInfo.totalEntries+'</span>)')
+					+ '<span>Calendar has '+ calendarInfo.totalEvents + 
+						(calendarInfo.totalEvents==calendarInfo.totalEntries ? ''
+						:' (<span class="titleDesc" title="'+ calendarInfo.totalEntries 
+							+' when expanding recurring events and counting individually. Only '
+							+ calendarInfo.totalEvents+' items from calendar feed">'+calendarInfo.totalEntries+'</span>)')
 					+' events <nobr>from '+ cnMF.formatDate(startDate, 'Y-n-D') +'</nobr>'
 					+' <nobr>to '+ cnMF.formatDate(endDate, 'Y-n-D')  +'</nobr>'
 					+' &nbsp; <nobr><a id="changeDates" class="actionable" href="#" title='

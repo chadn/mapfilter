@@ -333,6 +333,42 @@
 		var x = cnMF.eventList[parseInt(eventIndex)];
 		return x;
 	}
+	// returns event obj given gCalId, or null if not found
+	cnMF.getEventObjByCalId = function(gCalId){
+		for (var ii=0; cnMF.eventList[ii]; ii++) {
+			if (gCalId === cnMF.eventList[ii].gCalId) {
+				return cnMF.eventList[ii];
+			}
+		}
+		return null;
+	}
+	// returns event obj given gCalId, or null if not found
+	cnMF.updateEventByCalId = function(params){
+		var e = cnMF.getEventObjByCalId(params.gCalId);
+		if (e) {
+			return e.init(params);
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * Iterates through all GCM Events and builds array of unique addresses
+	 * @return {object} 
+	 */
+	cnMF.gatherUniqAddr = function gatherUniqAddr() {
+		var kk, uniqAddr = {};
+		for (var ii=0; cnMF.eventList[ii]; ii++) {
+			kk = cnMF.eventList[ii];
+			kk.addrToGoogle = kk.addrToGoogle.replace(/\([^\)]+\)\s*$/, ''); // remove parens and text inside parens
+			if (kk.addrToGoogle) {
+				uniqAddr[kk.addrToGoogle] = 1;
+			} else {
+				debug.debug(" Skipping blank address for "+kk.name+" ["+kk.addrOrig+"]",kk);
+			}
+		}
+		return uniqAddr;
+	}
 
 	cnMF.addCal = function(calendarId, calData){ 
 		// console.log("cnMF.addCal", calendarId, calData);
@@ -559,7 +595,8 @@
 		calendarInfo.gcTitle.replace(/"/,'&quot;');
 		calendarInfo.desc = cdata.description || '';
 		calendarInfo.gcLink = 'https://www.google.com/calendar/embed?src='+ calendarId;
-		
+		calendarInfo.totalEntries = 0; // each instance of recurring events are counted
+
 		// TODO2 move this to a method
 		if (!cnMF.tz.computedFromBrowser) {
 			cnMF.tz.name = cdata.timezone;
@@ -567,16 +604,27 @@
 			// TODO2 count in analytics how many people use timezones in browser vs calendar
 		}
 
+		// Create multiple gcm events from gcal recurring events first, 
+		// then process one-offs from recurring events (which will update created ones) and create non recurring events.
 		for (var ii=0; cdata.items && cdata.items[ii]; ii++) {
-			var curEntry = cdata.items[ii];
+			var curItem = cdata.items[ii];
+			if (curItem.recurrence) {
+				calendarInfo.totalEntries += cnMF.addEventsFromRecur(curItem, startDate, endDate, calendarInfo);
+			}
+		}
+		for (var ii=0; cdata.items && cdata.items[ii]; ii++) {
+			var curItem = cdata.items[ii];
+			if (curItem.recurrence) {
+				continue;
+			}
 			/*
-			if (!(curEntry['gd$when'] && curEntry['gd$when'][0]['startTime'])) {
-				debug.debug(" skipping cal curEntry (no gd$when) %s (%o)", curEntry['title']['$t'], curEntry);
+			if (!(curItem['gd$when'] && curItem['gd$when'][0]['startTime'])) {
+				debug.debug(" skipping cal curItem (no gd$when) %s (%o)", curItem['title']['$t'], curItem);
 				continue;
 			};
 			var url = {};
-			for (var jj=0; curEntry.link[jj]; jj++) {
-				var curLink = curEntry.link[jj];
+			for (var jj=0; curItem.link[jj]; jj++) {
+				var curLink = curItem.link[jj];
 				if (curLink.type == 'text/html') {
 					// looks like when rel='related', href is original event info (like meetup.com)
 					// when rel='alternate', href is the google.com calendar event info
@@ -585,35 +633,34 @@
 			}
 			*/
 			// https://developers.google.com/google-apps/calendar/v3/reference/events#resource
-			if (curEntry.endTimeUnspecified) {
-				debug.debug('Note that endTimeUnspecified==true ', curEntry);
+			if (curItem.endTimeUnspecified) {
+				debug.debug('Note that endTimeUnspecified==true ', curItem);
 			}
-			kk = cnMF.addEvent({
+			kk = {
 				//type: eType.id,
 				calTitle: calendarInfo.gcTitle,
-				name: curEntry.summary,
-				desc: curEntry.description,
-				addrOrig: curEntry.location || '',  // addrOrig is the location field of the event
-				addrToGoogle: curEntry.location || '',
-				gCalId: curEntry.iCalUID,  // or 'id'
+				name: curItem.summary,
+				desc: curItem.description,
+				addrOrig: curItem.location || '',  // addrOrig is the location field of the event
+				addrToGoogle: curItem.location || '',
+				gCalId: curItem.id,
 				//url: url.related || url.alternate, // TODO - is this what we want? see href above
-				url: curEntry.htmlLink || '',
-				dateStart: cnMF.parseGCalDate(curEntry.start, 'start'),
-				dateEnd: cnMF.parseGCalDate(curEntry.end, 'end')
-			});
-			// make ready for geocode TODO: remove this? or move this line to addrToGoogle above
-			kk.addrToGoogle = kk.addrToGoogle.replace(/\([^\)]+\)\s*$/, ''); // remove parens and text inside parens
-			if (kk.addrToGoogle) {
-				uniqAddr[kk.addrToGoogle] = 1;
+				url: curItem.htmlLink || '',
+				dateStart: cnMF.parseGCalDate(curItem.start, 'start'),
+				dateEnd: cnMF.parseGCalDate(curItem.end, 'end')
+			};
+			if (curItem.id.match(/_\d\d/) && cnMF.getEventObjByCalId(curItem.id)) {
+				kk = cnMF.updateEventByCalId(kk);
 			} else {
-				debug.debug(" Skipping blank address for "+kk.name+" ["+kk.addrOrig+"]",kk);
+				kk = cnMF.addEvent(kk);
+				calendarInfo.totalEntries++;
 			}
-			debug.log("parsed curEntry "+ii+": ", kk.name, curEntry, kk);
+			debug.log("parsed curItem "+ii+": ", kk.name, curItem, kk);
 		}
-		calendarInfo.totalEntries = ii;
-		calendarInfo.totalEvents = ii;		
+		calendarInfo.totalEvents = ii; // recurring events counted once
 		cnMF.addCal(calendarId, calendarInfo);
 		cnMF.reportData['fn'] = calendarInfo.gcTitle.replace(/\W/,"_");
+		uniqAddr = cnMF.gatherUniqAddr();
 
 		debug.log("calling mapfilter.geocode(): ", uniqAddr );
 		cnMF.myGeoDecodeComplete = false;
@@ -633,11 +680,12 @@
 		}
 	}
 	
+	
 	/**
 	 * Converts google date object to javascript date object
 	 * @param {object} gCalDate google's date object used in event items.
 	 * @param {string} startEnd either 'start' or 'end'.
-	 * @return {object} js date object
+	 * @return {object Date}
 	 */
 	cnMF.parseGCalDate = function parseGCalDate (gCalDate, startEnd) {
 		// https://developers.google.com/google-apps/calendar/v3/reference/events#resource
@@ -656,6 +704,64 @@
 				return cnMF.parseDate(gCalDate.date + 'T00:00:01.000Z');
 			}
 		} 
+	}
+
+	/**
+	 * Google calendar supports RFC 2445 recurrence syntax. Create multiple gcm events for each one.
+	 * @param {object} curItem google's calendar event item.
+	 * @param {object Date} startDate start of gcm date window
+	 * @param {object Date} endDate   end of gcm date window
+	 * @return {number} count of events added between startDate and endDate
+	 */
+	cnMF.addEventsFromRecur = function addEventsFromRecur(curItem, startDate, endDate, calendarInfo) {
+		if (!curItem.recurrence) {
+			return 0;
+		}
+		var dates, ii, options, rule, dateStart, gCalId;
+		/** @type {object Date} */ 
+		var curItemStart = cnMF.parseGCalDate(curItem.start, 'start'); 
+		/** @type {object Date} */ 
+		var durationMs = (cnMF.parseGCalDate(curItem.end, 'end')).getTime() - curItemStart.getTime();
+
+		// https://github.com/jakubroztocil/rrule
+		// note that constructor requires freq
+		options = RRule.parseString(curItem.recurrence[0].replace(/^RRULE:/,''));
+		options.dtstart = curItemStart;
+		rule = new RRule(options);
+		debug.debug('addEventsFromRecur rule', rule);
+		for (ii=1; curItem.recurrence[ii]; ii++) {
+			debug.debug('addEventsFromRecur recurrence '+ ii, curItem.recurrence[ii]);
+			rule.fromString(curItem.recurrence[ii].replace(/^RRULE:/,''));
+		}
+		// get list of dates from recurring event that falls between startDate & endDate
+		dates = rule.between(startDate, endDate, true); 
+		debug.debug('addEventsFromRecur dates', dates);
+
+		// create gcm event for each of dates
+		for (ii=0; dates[ii]; ii++) {
+			dateStart = new Date(dates[ii]);
+
+			/* want to gCalId format to be same as google's item.id, so if google feed contains an item that 
+			 * is a one-off edit of a recurring event, we can easily allow that one-off to overwrite 
+			 * our generated events.  ex: 2fbgvshoedaub6t0rctn7vq264_20141226T233000Z
+			 */
+			gCalId = curItem.id + '_' + cnMF.rfc3339(dateStart,false)
+						.replace(/-\d\d:\d\d$/,'Z')  // remove timezone info to match google format
+						.replace(/(-|:)/g,'');   // remove to match google format
+			cnMF.addEvent({
+				gcalItem: curItem,
+				calTitle: calendarInfo.gcTitle,
+				name: curItem.summary,
+				desc: curItem.description,
+				addrOrig: curItem.location || '',  // addrOrig is the location field of the event
+				addrToGoogle: curItem.location || '',
+				gCalId: gCalId,
+				url: curItem.htmlLink || '',
+				dateStart: dateStart,
+				dateEnd: new Date(dateStart.getTime() + durationMs)
+			});
+		}
+		return ii;
 	}
 
 
@@ -1022,6 +1128,13 @@
 		return (n < 10 ? '0' : '') + n;
 	}
 
+	/*
+	 * Converts a javascript date object to RFC 3339 string, format needed for google APIs. 
+	 * Note that RFC 3339, made for internet, is basically a subset of ISO 8601
+	 * @param {object Date} d javascript date object to convert
+	 * @param {boolean} clearhours zeros out the hours field
+	 * @return {string} ex: 2014-12-05T21:24:06-06:00
+	 */
 	cnMF.rfc3339 = function(d, clearhours) {
 		s = d.getUTCFullYear()
 			+ "-" + zeroPad(d.getUTCMonth() + 1)
@@ -1088,9 +1201,11 @@
 		}
 	}
 
-
-	// parseDate() always returns date object, accepts number (msecs)
-	//
+	/*
+	 * Converts a date from any type into a js date object
+	 * @param {object|undefined|number|string} s date object, undefined, msecs since epoch, ISO8601 string
+	 * @return {object Date} 
+	 */
 	cnMF.parseDate = function(s) {
 		if (typeof s == 'object') return s; // already a Date object
 		if (typeof s == 'undefined') return null;
@@ -1098,11 +1213,18 @@
 			if (s < 333888111) s = s * 1000; // convert secs to ms
 			return new Date(s);
 		}
+		// string type
 		return cnMF.parseISO8601(s, true)
 			|| new Date(Date.parse(s))
 			|| new Date(parseInt(s) * 1000);
 	}
 
+	/*
+	 * Converts a ISO 8601 string into a javascript date object
+	 * @param {string} s ISO 8601 string
+	 * @param {boolean} ignoreTimezone
+	 * @return {object Date} ex: 
+	 */
 	cnMF.parseISO8601 = function(s, ignoreTimezone) {
 		// derived from http://delete.me.uk/2005/03/iso8601.html
 		var regexp = "([0-9]{4})(-([0-9]{2})(-([0-9]{2})"
