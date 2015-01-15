@@ -843,8 +843,9 @@ $(document).ready(function() {
 
 				rowHTML += "<tr>";
 				//rowHTML += "<td>" + cnMF.formatDate(kk.dateStart, 'Y-m-L d H:i') + "</td>";
-				rowHTML += "<td>" + cnMF.formatDate(kk.dateStart, 'Y-m-L d g:ia') + "</td>";
-				//rowHTML += "<td>" + cnMF.formatDate(kk.dateStart, 'm/D  g:i a d') + "</td>";
+				//rowHTML += "<td>" + cnMF.formatDate(kk.dateStart, 'Y-m-L d g:i a') + "</td>"; // does not sort correctly
+				rowHTML += "<td>" + cnMF.formatDate(kk.dateStart, 'd m/D/Y g:i a') + "</td>"; // does sort 
+				//rowHTML += "<td>" + cnMF.formatDate(kk.dateStart, 'd M D Y g:i a') + "</td>"; // does not sort correctly
 				// TODO: use this and/or custom sort http://tablesorter.com/docs/example-meta-parsers.html
 				// rowHTML += "<td>" + cnMF.formatDate(kk.dateStart, 'm/D d g:ia') + "</td>";
 
