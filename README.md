@@ -15,9 +15,10 @@ The example code is messy.  I wanted to get something up and running so i can ex
 On Nov 17, 2014, Google deprecated v1 and v2 [src](http://googleappsupdates.blogspot.com/2014/10/deprecated-google-calendar-apis-v1-v2.html)
 In December 2014, GCM was updated to use v3.  One of the key things in v3 is usage limits.  These are controlled by either API keys (simple, public calendars only) or OAuth (more complicated, but can get private calendar data).  GCM uses API keys, which are tied to domains. 
 
-Therefore, **If you want to run this from any domain besides chadnorwood.com, you need to ..**
-# generate your own API key - https://developers.google.com/api-client-library/javascript/start/start-js#Setup
-# replace API key in <a href='https://github.com/chadn/mapfilter/blob/development/examples/gcm/js/cnMapFilter.js'>examples/gcm/js/cnMapFilter.js</a>  with your key - search for "Google API Key"
+Therefore, **If you want to run this from any domain besides chadnorwood.com, you need to**
+
+1. Generate your own API key - https://developers.google.com/api-client-library/javascript/start/start-js#Setup
+1. Replace API key in <a href='https://github.com/chadn/mapfilter/blob/development/examples/gcm/js/cnMapFilter.js'>examples/gcm/js/cnMapFilter.js</a>  with your key - search js for "Google API Key"
 
 ### License ###
 
