@@ -683,12 +683,16 @@
 	
 	/**
 	 * Converts google date object to javascript date object
-	 * @param {object} gCalDate google's date object used in event items.
-	 * @param {string} startEnd either 'start' or 'end'.
+	 * @param {object} gCalDate - google's date object used in event items.
+	 * @param {string} startEnd - either 'start' or 'end'.
 	 * @return {object Date}
 	 */
 	cnMF.parseGCalDate = function parseGCalDate (gCalDate, startEnd) {
 		// https://developers.google.com/google-apps/calendar/v3/reference/events#resource
+		if (!gCalDate) {
+			debug.log("parseGCalDate() - warning: no gCalDate");
+			return new Date(1); // return epoch
+		} 
 		if (gCalDate.dateTime) {
 			// ex: 2011-03-31T19:00:49.000Z
 			if (gCalDate.timeZone) {
@@ -1155,9 +1159,17 @@
 	cnMF.dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 	cnMF.dayAbbrevs = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
+  /*
+   * @param {object Date} d
+   * @param {string} format
+   * @return {string} 
+   */
 	cnMF.formatDate = function(d, format) {
 		var f = cnMF.dateFormatters;
 		var s = '';
+
+		if (!d) return s;
+
 		for (var i=0; i<format.length; i++) {
 			var c = format.charAt(i);
 			if (f[c]) {
