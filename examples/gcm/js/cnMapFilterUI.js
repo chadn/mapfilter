@@ -214,9 +214,9 @@ $(document).ready(function() {
 		 *   static variables
 		 */
 		var
-		urlIconDefault = "http://www.google.com/mapfiles/marker.png",
-		urlIconOrange = "http://gmaps-samples.googlecode.com/svn/trunk/markers/orange/blank.png",
-		urlIconBlue  = "http://gmaps-samples.googlecode.com/svn/trunk/markers/blue/blank.png",
+		urlIconDefault = "https://www.google.com/mapfiles/marker.png",
+		urlIconOrange = "https://gmaps-samples.googlecode.com/svn/trunk/markers/orange/blank.png",
+		urlIconBlue  = "https://gmaps-samples.googlecode.com/svn/trunk/markers/blue/blank.png",
 		mapVersion = "Map Version 2012-4-8";
 
 		cnMF.reportData.loadTime = (startMs2 +'').replace(/(\d{3})$/,".$1") // add period so its secs.msec
@@ -364,7 +364,7 @@ $(document).ready(function() {
 			$('#rtSide').width( getRtSideWidth() ).height( getRtSideHeight() );
 			
 		
-			$('#gcmLogo').html("<h1><a href='http://chadnorwood.com/projects/gcm/' class='jumpLink' target='_blank' title='Click to view Google Calendar Map homepage in new window'>GCM</a></h1>");
+			$('#gcmLogo').html("<h1><a href='https://chadnorwood.com/projects/gcm/' class='jumpLink' target='_blank' title='Click to view Google Calendar Map homepage in new window'>GCM</a></h1>");
 			// need to init resultsDiv and put MapStatus under resultsDataStatus
 			$('#resultsDataStatus').html("<div id='MapStatus'>.. Loading Map ..</div><div id='MapStatus2'></div>");
 
@@ -1015,7 +1015,7 @@ $(document).ready(function() {
 
 		function addLinks (txt) {
 			if (txt && typeof txt == 'string') {
-				return txt.replace(/(http:\/\/[^<>\s]+)/gi,'<a href="$1">$1</a>');				
+				return txt.replace(/(https:\/\/[^<>\s]+)/gi,'<a href="$1">$1</a>');				
 			} else {
 				return txt;
 			}
@@ -1119,7 +1119,7 @@ $(document).ready(function() {
 		  // TODO: remove this?
 		function getXmlData () {
 			// jsoncallback=?
-			xmlUrl = 'http://feeds2.feedburner.com/torontoevents?format=xml&jsoncallback=?';
+			xmlUrl = 'https://feeds2.feedburner.com/torontoevents?format=xml&jsoncallback=?';
 			if (xmlUrl.search(/^(http|feed)/i) < 0) {
 			  debug.log("getXmlData(): bad url: "+ calendarId);
 			  return;

@@ -68,7 +68,7 @@
 		return this.validCoords ?  this.lt + "," + this.lg : '';
 	};
 	EventClass.prototype.getDirectionsUrlStr = function(){
-		return 'http://maps.google.com/maps?q=' + this.addrToGoogle.replace(/ /g, '+').replace(/"/g, '%22');
+		return 'https://maps.google.com/maps?q=' + this.addrToGoogle.replace(/ /g, '+').replace(/"/g, '%22');
 	};
 	EventClass.prototype.insideCurMap = function(mapbox){
 		return this.validCoords ? mapbox.contains(new google.maps.LatLng(this.lt, this.lg)) : false;
@@ -559,7 +559,8 @@
 			'max-results': 250, // default, can go up to 2500
 			//'orderBy'  : 'startTime',
 			'singleevents': true,
-			'key':'AIzaSyCdpWK6w91IDKmaGtbhPkPtWrZfroi07WQ' // Google API Key for chadnorwood.com
+			'key':'AIzaSyBYxFbC7UOW7RreLsERo1gOgKVcup4jPqk' // Google API Key for chadnorwood.com, created 2015-1-6
+	    //		'key':'AIzaSyCdpWK6w91IDKmaGtbhPkPtWrZfroi07WQ' // Google API Key for chadnorwood.com 2014
 		};
 		if (cnMF.tz.name != 'unknown') {
 			gCalObj.ctz = cnMF.tz.name; // ex: 'America/Chicago'
