@@ -209,9 +209,29 @@
 	MarkerClass.prototype.init = function ( eventObj, gMap ) {
 		this.coordsStr = eventObj.getCoordsStr();
 		this.eventList = [eventObj.id];
+                var pinColor, today = addDay = new Date();
+                if (eventObj.dateStart <= addDay.setDate(today.getDate() + 7)) {
+                    pinColor = "FF4040";
+                } else if (eventObj.dateStart <= addDay.setDate(today.getDate() + 30)) {
+                    pinColor = "00FF00";
+                } else if (eventObj.dateStart <= addDay.setDate(today.getDate() + 60)) {
+                    pinColor = "B0FFB0";
+                } else {
+                    pinColor = "FFFFFF";
+                }
+                var pinImage = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" + pinColor,
+                    new google.maps.Size(21, 34),
+                    new google.maps.Point(0,0),
+                    new google.maps.Point(10, 34));
+                var pinShadow = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_shadow",
+                    new google.maps.Size(40, 37),
+                    new google.maps.Point(0, 0),
+                    new google.maps.Point(12, 35));
 		this.googleMarker = new google.maps.Marker({
 			position: new google.maps.LatLng(eventObj.lt, eventObj.lg),
-			map: gMap
+			map: gMap,
+                        icon: pinImage,
+                        shadow: pinShadow
 		});
 
 		// associate with eventObj
