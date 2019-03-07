@@ -26,7 +26,3 @@ This code is released under the terms of the [MIT license](LICENSE).
 
 The MIT License is simple and easy to understand and it places almost no restrictions on what you can do.
 You are free to use in any other project (even commercial projects) as long as the copyright header is left intact.
-
-
-
-[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/6280089702654e2e4bd7e4dc622097df "githalytics.com")](http://githalytics.com/chadn/mapfilter)
